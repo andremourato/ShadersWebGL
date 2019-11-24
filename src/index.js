@@ -8,12 +8,6 @@
 var gl = null; // WebGL context
 var shaderProgram = null;
 
-// To allow choosing the way of drawing the model triangles
-var primitiveType = null;
-
-// To allow choosing the projection type
-var projectionType = 1;
-
 // SPEED
 const GLOBAL_SPEED = 0.03;
 var tx_speed = GLOBAL_SPEED;
@@ -32,9 +26,12 @@ var DEFAULT_TZ = 0;
 var DEFAULT_angleXX = 30;
 var DEFAULT_angleYY = 45;
 var DEFAULT_angleZZ = 0;
-var DEFAULT_SCALE = 0;
+var DEFAULT_SX = 1;
+var DEFAULT_SY = 1;
+var DEFAULT_SZ = 1;
 
 // MODELS
+var model_files = ['modeloCuboV0.txt','modeloCuboV1.txt']
 var model_list = []
 
 //----------------------------------------------------------------------------
@@ -77,47 +74,38 @@ function initBuffers(model) {
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 function drawScene() {
-	console.log('Drawing scene')
+	
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	// Passing the Projection Matrix to apply the current projection
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	// Passing the Model View Matrix to apply the current transformation
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	// A standard view volume.
+	// Viewer is at (0,0,0)
+	// Ensure that the model is "inside" the view volume
+	var pMatrix = perspective( 45, 1, 0.05, 10 );
+	for(var i = 0; i < model_list.length;i++){
+		var model = model_list[i]
+		model.tz = -1.5;
 
-	for(var m = 0; m < model_list.length; m++){
-		var model = model_list[m]
-		//Computing the Projection Matrix
-		if( projectionType == 0 ) {
-			// For now, the default orthogonal view volume
-			model.pMatrix = ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );
-			// No need to move the model into the view volume
-			model.tz = 0;
-			// TO BE DONE !
-			// Allow the user to control the size of the view volume
-		}
-		else {
-			// A standard view volume.
-			// Viewer is at (0,0,0)
-			// Ensure that the model is "inside" the view volume
-			model.pMatrix = perspective( 45, 1, 0.05, 10 );
-			model.tz = -1.5;
-		}
-		
-		// Passing the Projection Matrix to apply the current projection
-		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(model.pMatrix)));
 
+		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 		// Computing the Model-View Matrix
 		// Pay attention to the matrix multiplication order!!
 		// First transformation ?
 		// Last transformation ?
-		model.mvMatrix = mult( rotationZZMatrix( model.angleZZ ), 
+		var mvMatrix = mult( rotationZZMatrix( model.angleZZ ), 
 							scalingMatrix( model.sx, model.sy, model.sz ) );
-		model.mvMatrix = mult( rotationYYMatrix( model.angleYY ), model.mvMatrix );
-		model.mvMatrix = mult( rotationXXMatrix( model.angleXX ), model.mvMatrix );
-		model.mvMatrix = mult( translationMatrix( model.tx, model.ty, model.tz ), model.mvMatrix );
-		// Passing the Model View Matrix to apply the current transformation
-		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(model.mvMatrix)));
+		mvMatrix = mult( rotationYYMatrix( model.angleYY ), mvMatrix );
+		mvMatrix = mult( rotationXXMatrix( model.angleXX ), mvMatrix );
+		mvMatrix = mult( translationMatrix( model.tx, model.ty, model.tz ), mvMatrix );
+
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 		// Drawing the contents of the vertex buffer
 		// primitiveType allows drawing as filled triangles / wireframe / vertices
+		model.tz = -1.5;
 		if( primitiveType == gl.LINE_LOOP ) {
 			// To simulate wireframe drawing!
 			// No faces are defined! There are no hidden lines!
@@ -156,9 +144,7 @@ function animate() {
 	var timeNow = new Date().getTime();
 	if( lastTime != 0 ) {
 		var elapsed = timeNow - lastTime;
-		if( rotationYY_ON ) {
-			angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
-	    }
+		model_list[1].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
 	}
 	lastTime = timeNow;
 }
@@ -244,19 +230,19 @@ function setEventListeners(){
 
 	//Guide the camera
 	kd.W.down(function () {
-		console.log('w')
+		model_list[0].ty += ty_speed;
 	});	
 
 	kd.A.down(function () {
-		console.log('a')
+		model_list[0].tx -= tx_speed;
 	});	
 
 	kd.S.down(function () {
-		console.log('s')
+		model_list[0].ty -= ty_speed;
 	});	
 
 	kd.D.down(function () {
-		console.log('d')
+		model_list[0].tx += tx_speed;
 	});	
 
 	kd.Q.down(function () {
@@ -278,7 +264,9 @@ function runWebGL() {
 	setEventListeners();
 	shaderProgram = initShaders( gl );
 	//Initializes all different models of objects
-	initBuffers(model_list[i]);
+	for(var i = 0; i < model_list.length; i++){
+		initBuffers(model_list[i]);
+	}
 	tick();		// A timer controls the rendering / animation
 }
 
@@ -317,12 +305,33 @@ function initWebGL( canvas ) {
 }
 
 function loadModels(){
-	for(var i = 0; i < 1; i++){
-		model_list[i] = getModelFromFile('SOMEFILE')
+	for(var i = 0; i < model_files.length; i++){
+		console.log('Loading file',model_files[i])
+		model_list[i] = getModelFromFile(model_files[i])
 	}
 }
 
+function readSingleFile(e) {
+	var file = e.target.files[0];
+	if (!file) {
+	  return;
+	}
+	var reader = new FileReader();
+	reader.onload = function(e) {
+	  var contents = e.target.result;
+	  // Display file content
+	  displayContents(contents);
+	};
+	reader.readAsText(file);
+}
+
+function displayContents(contents) {
+	var element = document.getElementById('file-content');
+	element.innerHTML = contents;
+}
+
 function getModelFromFile(filename){
+
 	var vertices = [
 		// FRONT FACE
 		-0.25, -0.25,  0.25,
@@ -419,7 +428,9 @@ function getModelFromFile(filename){
 		DEFAULT_angleXX,
 		DEFAULT_angleYY,
 		DEFAULT_angleZZ,
-		DEFAULT_SCALE,
+		DEFAULT_SX,
+		DEFAULT_SY,
+		DEFAULT_SZ,
 		vertices,
 		colors
 	);
