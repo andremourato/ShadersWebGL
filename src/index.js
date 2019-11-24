@@ -26,9 +26,9 @@ var DEFAULT_TZ = 0;
 var DEFAULT_angleXX = 30;
 var DEFAULT_angleYY = 45;
 var DEFAULT_angleZZ = 0;
-var DEFAULT_SX = 1;
-var DEFAULT_SY = 1;
-var DEFAULT_SZ = 1;
+var DEFAULT_SX = 0.2;
+var DEFAULT_SY = 0.2;
+var DEFAULT_SZ = 0.2;
 
 // MODELS
 var model_files = ['modeloCuboV0.txt','modeloCuboV1.txt']
@@ -74,7 +74,7 @@ function initBuffers(model) {
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 function drawScene() {
-	
+
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -106,18 +106,7 @@ function drawScene() {
 		// Drawing the contents of the vertex buffer
 		// primitiveType allows drawing as filled triangles / wireframe / vertices
 		model.tz = -1.5;
-		if( primitiveType == gl.LINE_LOOP ) {
-			// To simulate wireframe drawing!
-			// No faces are defined! There are no hidden lines!
-			// Taking the vertices 3 by 3 and drawing a LINE_LOOP
-			var i;
-			for( i = 0; i < model.triangleVertexPositionBuffer.numItems / 3; i++ ) {
-				gl.drawArrays( primitiveType, 3 * i, 3 ); 
-			}
-		}	
-		else {
-			gl.drawArrays(primitiveType, 0, model.triangleVertexPositionBuffer.numItems); 
-		}
+		gl.drawArrays(gl.TRIANGLES, 0, model.triangleVertexPositionBuffer.numItems);
 	}
 }
 
@@ -150,83 +139,8 @@ function animate() {
 }
 
 function setEventListeners(){
-	// Dropdown list
-	var projection = document.getElementById("projection-selection");
-	projection.addEventListener("click", function(){
-		// Getting the selection
-		var p = projection.selectedIndex;
-		switch(p){
-			case 0 : projectionType = 0;
-				break;
-			case 1 : projectionType = 1;
-				break;
-		}  	
-	});      
 
-	// Dropdown list
-	var list = document.getElementById("rendering-mode-selection");
-	list.addEventListener("click", function(){
-		// Getting the selection
-		var mode = list.selectedIndex;
-		switch(mode){
-			case 0 : primitiveType = gl.TRIANGLES;
-				break;
-			case 1 : primitiveType = gl.LINE_LOOP;
-				break;
-			case 2 : primitiveType = gl.POINTS;
-				break;
-		}
-	});      
-
-	// Button events
-	
-	// document.getElementById("YY-on-off-button").onclick = function(){
-	// 	// Switching on / off
-	// 	if( rotationYY_ON ) 
-	// 		rotationYY_ON = 0;
-	// 	else 
-	// 		rotationYY_ON = 1;
-	// };
-
-	// document.getElementById("YY-direction-button").onclick = function(){
-	// 	// Switching the direction
-	// 	if( rotationYY_DIR == 1 )
-	// 		rotationYY_DIR = -1;
-	// 	else 
-	// 		rotationYY_DIR = 1;
-	// };      
-
-	// document.getElementById("YY-slower-button").onclick = function(){
-		
-	// 	rotationYY_SPEED *= 0.75;  
-	// };      
-
-	// document.getElementById("YY-faster-button").onclick = function(){
-	// 	rotationYY_SPEED *= 1.25;  
-	// };      
-
-	// document.getElementById("reset-button").onclick = function(){
-	// 	// The initial values
-	// 	tx = 0.0;
-	// 	ty = 0.0;
-	// 	tz = 0.0;
-	// 	angleXX = 0.0;
-	// 	angleYY = 0.0;
-	// 	angleZZ = 0.0;
-	// 	sx = 1.0;
-	// 	sy = 1.0;
-	// 	sz = 1.0;
-	// 	rotationYY_ON = 0;
-	// 	rotationYY_DIR = 1;
-	// 	rotationYY_SPEED = 1;
-	// };      
-
-	document.getElementById("face-culling-button").onclick = function(){
-		if( gl.isEnabled( gl.CULL_FACE ) )
-			gl.disable( gl.CULL_FACE );
-		else
-			gl.enable( gl.CULL_FACE );
-	};
+    window.addEventListener('resize', function() {resize()}, false);
 
 	//Guide the camera
 	kd.W.down(function () {
@@ -254,6 +168,23 @@ function setEventListeners(){
 	});	
 }
 
+function resize() {
+
+	var ratio = 1
+	var targetHeight = window.innerWidth * 1/ratio;
+
+	if (window.innerHeight > targetHeight) {
+		// Center vertically
+		gl.canvas.width = window.innerWidth;
+		gl.canvas.height = targetHeight;
+	} else {
+		// Center horizontally
+		gl.canvas.width = (window.innerHeight) * ratio;
+		gl.canvas.height = window.innerHeight;
+	}
+	gl.viewport(0, 0, gl.canvas.width,gl.canvas.height);
+  }
+
 //----------------------------------------------------------------------------
 // Running WebGL
 //----------------------------------------------------------------------------
@@ -278,11 +209,7 @@ function initWebGL( canvas ) {
 		// Create the WebGL context
 		// Some browsers still need "experimental-webgl"
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-		// DEFAULT: The viewport occupies the whole canvas 
-		// DEFAULT: The viewport background color is WHITE
-		// Drawing the triangles defining the model
-		primitiveType = gl.TRIANGLES;
-		
+		resize()
 		// DEFAULT: Face culling is DISABLED
 		// Enable FACE CULLING
 		gl.enable( gl.CULL_FACE );
@@ -290,7 +217,6 @@ function initWebGL( canvas ) {
 		// DEFAULT: The BACK FACE is culled!!
 		// The next instruction is not needed...
 		gl.cullFace( gl.BACK );
-
 		//activates the continuous key event
 		kd.run(function () {
 			kd.tick();

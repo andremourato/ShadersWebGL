@@ -26,6 +26,8 @@ Passing the Model-View Matrix and the Projection Matrix.
 
 -->
 
+
+
 <script id="shader-vs" type="x-shader/x-vertex">
 	
     attribute vec3 aVertexPosition;
@@ -90,15 +92,25 @@ Passing the Model-View Matrix and the Projection Matrix.
 <script type="text/javascript" src="EntityModel.js"></script>
 <script type="text/javascript" src="index.js"></script>
 
+
+<style>
+	/* remove the border */
+		body canvas {
+			margin: 0;
+			padding: 0;
+			position: absolute;
+		}
+</style>
+
 </head>
 
 <body onload="runWebGL();">
 
-	<div style="text-align: center">
+	<div id="containerDiv" style="text-align: center">
 		
-		<canvas id="my-canvas" style="border:1px solid #000000;" width="700" height="700"></canvas>
+		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
 
-		<p>YY rotation: 
+		<!-- <p>YY rotation: 
 			
 		<button id="YY-on-off-button">On / Off</button>
 
@@ -134,7 +146,7 @@ Passing the Model-View Matrix and the Projection Matrix.
 		<button id="reset-button">Reset</button>
 		
 		<button id="face-culling-button">Back-Face-Culling ON/OFF</button>
-		</p>
+		</p> -->
 				
 	</div>
 
