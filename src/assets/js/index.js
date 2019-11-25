@@ -84,7 +84,6 @@ function printInfo(){
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 function drawScene() {
-	var currentScene = scene_list[currentSceneIndex]
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -96,23 +95,22 @@ function drawScene() {
 	// A standard view volume.
 	// Viewer is at (0,0,0)
 	// Ensure that the model is "inside" the view volume
-	// for(var i = 0; i < currentScene.objects.length; i++){
-	// 	var object = currentScene.objects[i]
-	var obj = currentScene.objects[0]
-	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
-	// Computing the Model-View Matrix
-	var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
-						scalingMatrix( obj.sx, obj.sy, obj.sz ) );
-	mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
-	mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
-	mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
+	var currentScene = scene_list[currentSceneIndex]
+	for(var i = 0; i < currentScene.objects.length; i++){
+		var obj = currentScene.objects[i]
+		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
+		// Computing the Model-View Matrix
+		var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
+							scalingMatrix( obj.sx, obj.sy, obj.sz ) );
+		mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
+		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
+		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 
-	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-	// Drawing the contents of the vertex buffer
-	//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
-	console.log(obj.triangleVertexPositionBuffer.numItems)
-	gl.drawArrays(gl.TRIANGLES, 0, obj.triangleVertexPositionBuffer.numItems);
-// }
+		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+		// Drawing the contents of the vertex buffer
+		//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
+		gl.drawArrays(gl.TRIANGLES, 0, obj.triangleVertexPositionBuffer.numItems);
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -175,7 +173,8 @@ function setEventListeners(){
 
 function resize() {
 
-	var ratio = 1
+	var ratio = 16/9
+	console.log(window.innerWidth)
 	var targetHeight = window.innerWidth * 1/ratio;
 
 	if (window.innerHeight > targetHeight) {
@@ -187,7 +186,7 @@ function resize() {
 		gl.canvas.width = (window.innerHeight) * ratio;
 		gl.canvas.height = window.innerHeight;
 	}
-	gl.viewport(0, 0, gl.canvas.width,gl.canvas.height);
+	gl.viewport(0, 0, gl.canvas.height,gl.canvas.width);
   }
 
 //----------------------------------------------------------------------------

@@ -20,7 +20,7 @@ app.get('/models', function (req, res) {
       // Do whatever you want to do with the file
       file = directoryPath + file
       console.log('Loaded model from',file);
-      var contents = fs.readFileSync(file, 'utf8').toString().split('\r\n');
+      var contents = fs.readFileSync(file, 'utf8').toString().split('\n');
       var num_lines = parseInt(contents[0])
       var half_point = num_lines / 2
       var model = {
@@ -52,7 +52,6 @@ app.get('/scenes', function (req, res) {
 		if (err) {
 			return console.log('Unable to scan directory: ' + err);
 		} 
-    console.log(files)
 		//listing all files using forEach
 		files.forEach(function (file) {
       var originalFile = file
@@ -68,16 +67,16 @@ app.get('/scenes', function (req, res) {
       for(var i = 0; i < num_objects; i++){
         var obj = contents[i].trim().split(' ')
         scene.objects.push({
-          tx: obj[0],
-          ty: obj[1],
-          tz: obj[2],
-          angleXX: obj[3],
-          angleYY: obj[4],
-          angleZZ: obj[5],
-          sx: obj[6],
-          sy: obj[7],
-          sz: obj[8],
-          modelName: obj[9],
+          tx: parseFloat(obj[0]),
+          ty: parseFloat(obj[1]),
+          tz: parseFloat(obj[2]),
+          angleXX: parseFloat(obj[3]),
+          angleYY: parseFloat(obj[4]),
+          angleZZ: parseFloat(obj[5]),
+          sx: parseFloat(obj[6]),
+          sy: parseFloat(obj[7]),
+          sz: parseFloat(obj[8]),
+          name: obj[9],
         })
       }
       body.scenes.push(scene)
