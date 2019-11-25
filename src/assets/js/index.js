@@ -43,7 +43,7 @@ var scene_list = []
 function initBuffers(object) {
 	
 	// Coordinates
-		
+	console.log(object)
 	object.triangleVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, object.triangleVertexPositionBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.vertices), gl.STATIC_DRAW);
@@ -98,8 +98,9 @@ function drawScene() {
 	// A standard view volume.
 	// Viewer is at (0,0,0)
 	// Ensure that the model is "inside" the view volume
-	for(var i = 0; i < currentScene.objects.length; i++){
-		var object = currentScene.objects[i]
+	// for(var i = 0; i < currentScene.objects.length; i++){
+	// 	var object = currentScene.objects[i]
+	var object = currentScene.objects[0]
 		object.tz = -1.5 //TODO: REMOVE LATER
 		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 		// Computing the Model-View Matrix
@@ -111,8 +112,9 @@ function drawScene() {
 
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 		// Drawing the contents of the vertex buffer
+		//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
 		gl.drawArrays(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems);
-	}
+	// }
 }
 
 //----------------------------------------------------------------------------
@@ -199,11 +201,10 @@ async function runWebGL() {
 	initWebGL( canvas );
 	var mod_arr = await loadModels()
 	mod_arr.models.forEach(x => {
-		model_list.push(new Model(x.vertices,x.colors))
+		model_list.push({vertices:x.vertices,colors:x.colors})
 	})
 	console.log('Loaded all models!')
 	var sc_arr = await fetchScenes()
-	console.log(sc_arr)
 	sc_arr.scenes.forEach(scene => {
 		var newScene = {
 			name: scene.name,
@@ -211,7 +212,7 @@ async function runWebGL() {
 		}
 		scene.objects.forEach((obj) => {
 			var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,modelname} = obj
-			newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,getModel(modelname)))
+			newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,model:getModel(modelname)})
 		})
 		scene_list.push(newScene)
 	})
