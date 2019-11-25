@@ -5,7 +5,7 @@ NodeJS
 NPM (Node Package Manager)
 NuxtJS
 
-## Installing prerequisites
+## Installing prerequisites (skip if already installed)
 ```
 sudo npm cache clean -f
 sudo npm install -g n
