@@ -40,34 +40,32 @@ var scene_list = []
 //----------------------------------------------------------------------------
 //  Rendering
 // Handling the Vertex and the Color Buffers
-function initBuffers(object) {
-	
+function initBuffers(obj) {
 	// Coordinates
-	console.log(object)
-	object.triangleVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, object.triangleVertexPositionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.vertices), gl.STATIC_DRAW);
-	object.triangleVertexPositionBuffer.itemSize = 3;
-	object.triangleVertexPositionBuffer.numItems = object.model.vertices.length / 3;			
+	obj.triangleVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, obj.triangleVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+	obj.triangleVertexPositionBuffer.itemSize = 3;
+	obj.triangleVertexPositionBuffer.numItems = obj.vertices.length / 3;
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			object.triangleVertexPositionBuffer.itemSize, 
+			obj.triangleVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
 		
-	object.triangleVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, object.triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.colors), gl.STATIC_DRAW);
-	object.triangleVertexColorBuffer.itemSize = 3;
-	object.triangleVertexColorBuffer.numItems = object.model.colors.length / 3;			
+	obj.triangleVertexColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, obj.triangleVertexColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.colors), gl.STATIC_DRAW);
+	obj.triangleVertexColorBuffer.itemSize = 3;
+	obj.triangleVertexColorBuffer.numItems = obj.colors.length / 3;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			object.triangleVertexColorBuffer.itemSize, 
+			obj.triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 }
 
@@ -100,28 +98,28 @@ function drawScene() {
 	// Ensure that the model is "inside" the view volume
 	// for(var i = 0; i < currentScene.objects.length; i++){
 	// 	var object = currentScene.objects[i]
-	var object = currentScene.objects[0]
-		object.tz = -1.5 //TODO: REMOVE LATER
-		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
-		// Computing the Model-View Matrix
-		var mvMatrix = mult( rotationZZMatrix( object.angleZZ ), 
-							scalingMatrix( object.sx, object.sy, object.sz ) );
-		mvMatrix = mult( rotationYYMatrix( object.angleYY ), mvMatrix );
-		mvMatrix = mult( rotationXXMatrix( object.angleXX ), mvMatrix );
-		mvMatrix = mult( translationMatrix( object.tx, object.ty, object.tz ), mvMatrix );
+	var obj = currentScene.objects[0]
+	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
+	// Computing the Model-View Matrix
+	var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
+						scalingMatrix( obj.sx, obj.sy, obj.sz ) );
+	mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
+	mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
+	mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 
-		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-		// Drawing the contents of the vertex buffer
-		//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
-		gl.drawArrays(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems);
-	// }
+	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+	// Drawing the contents of the vertex buffer
+	//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
+	console.log(obj.triangleVertexPositionBuffer.numItems)
+	gl.drawArrays(gl.TRIANGLES, 0, obj.triangleVertexPositionBuffer.numItems);
+// }
 }
 
 //----------------------------------------------------------------------------
 // Timer
 //----------------------------------------------------------------------------
 function tick() {
-	window.requestAnimFrame(tick);
+	requestAnimFrame(tick);
 	drawScene();
 	animate();
 }
@@ -196,14 +194,11 @@ function resize() {
 // Running WebGL
 //----------------------------------------------------------------------------
 async function runWebGL() {
-	console.log('Loading webgl...')
 	var canvas = document.getElementById("my-canvas");
-	initWebGL( canvas );
 	var mod_arr = await loadModels()
 	mod_arr.models.forEach(x => {
-		model_list.push({vertices:x.vertices,colors:x.colors})
+		model_list.push({name:x.name,vertices:x.vertices,colors:x.colors})
 	})
-	console.log('Loaded all models!')
 	var sc_arr = await fetchScenes()
 	sc_arr.scenes.forEach(scene => {
 		var newScene = {
@@ -211,11 +206,16 @@ async function runWebGL() {
 			objects: []
 		}
 		scene.objects.forEach((obj) => {
-			var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,modelname} = obj
-			newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,model:getModel(modelname)})
+			var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,name} = obj
+			var model = getModel(name)
+			var vertices = [...model.vertices]
+			var colors = [...model.colors]
+			newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,colors})
 		})
 		scene_list.push(newScene)
 	})
+	initWebGL( canvas );
+	console.log('Loaded all models!')
 	console.log('Loaded all scenes!')
 	setEventListeners();
 	shaderProgram = initShaders( gl );
@@ -256,11 +256,9 @@ function initWebGL( canvas ) {
 
 function loadCurrentScene(){
 	var scene = scene_list[currentSceneIndex]
-	console.log(scene)
 	for(var i = 0; i < scene.objects.length; i++){
 		initBuffers(scene.objects[i])
 	}
-	console.log('BUffers inited')
 }
 
 function fetchScenes(){
@@ -283,7 +281,7 @@ function fetchScenes(){
 }
 
 function getModel(name){
-	return model_list.filter(x => x.name == name)[0]
+	return {...model_list.filter(x => x.name == name)[0]}
 }
 
 function loadModels(){

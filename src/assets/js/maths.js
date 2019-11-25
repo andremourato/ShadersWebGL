@@ -322,7 +322,7 @@ function mult( u, v )
 
 //----------------------------------------------------------------------------
 //
-//  Matrix functions
+//  Matrix Functions
 //
 
 function transpose( m )
@@ -403,7 +403,7 @@ var sizeof = {
 
 function rotationXXMatrix( degrees )
 {
-	var m = mat4();
+	m = mat4();
 	
 	m[1][1] = Math.cos( radians( degrees ) );
 	
@@ -418,7 +418,7 @@ function rotationXXMatrix( degrees )
 
 function rotationYYMatrix( degrees )
 {
-	var m = mat4();
+	m = mat4();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -433,7 +433,7 @@ function rotationYYMatrix( degrees )
 
 function rotationZZMatrix( degrees )
 {
-	var m = mat4();
+	m = mat4();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -448,7 +448,7 @@ function rotationZZMatrix( degrees )
 
 function scalingMatrix( sx, sy, sz )
 {
-	var m = mat4();
+	m = mat4();
 	
 	m[0][0] = sx;
 	
@@ -461,7 +461,7 @@ function scalingMatrix( sx, sy, sz )
 
 function translationMatrix( tx, ty, tz )
 {
-	var m = mat4();
+	m = mat4();
 	
 	m[0][3] = tx;
 	
@@ -517,5 +517,3 @@ function perspective( fovy, aspect, near, far )
 
     return result;
 }
-
-
