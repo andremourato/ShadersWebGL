@@ -17,8 +17,15 @@ sudo n 12.13.0
 npm i
 ```
 
-## Running App
+## Running Server (on terminal1)
 ```
+cd src
+npm run server
+```
+
+## Running App (on terminal2)
+```
+cd src
 npm run dev
 ```
 Open the browser on http://localhost:3000/
