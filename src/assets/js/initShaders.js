@@ -11,26 +11,38 @@
 
 // Getting and compiling a shader
 
-function getShader(gl, id) {
-	var shaderScript = document.getElementById(id);
-	if (!shaderScript) {
-		return null;
-	}
+var vertexShaderText = [
+	'attribute vec3 aVertexPosition;',
+	'attribute vec3 aVertexColor;',
+	'uniform mat4 uMVMatrix;',
+	'uniform mat4 uPMatrix;',
+	'varying vec4 vertexColor;',
+	'void main(void) {',
+		'gl_PointSize = 5.0;',
+		'gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);',
+		'vertexColor = vec4(aVertexColor, 1.0);',
+	'}'
+].join('\n')
 
-	var str = "";
-	var k = shaderScript.firstChild;
-	while (k) {
-		if (k.nodeType == 3) {
-			str += k.textContent;
-		}
-		k = k.nextSibling;
-	}
+var fragmentShaderText = [
+	'precision mediump float;',
+	'varying vec4 vertexColor;',
+	'void main(void) {',
+		'gl_FragColor = vertexColor;',
+	'}'
+].join('\n')
+
+
+export function getShader(gl, id) {
 
 	var shader;
-	if (shaderScript.type == "x-shader/x-fragment") {
+	var str;
+	if (id == "fragment") {
 		shader = gl.createShader(gl.FRAGMENT_SHADER);
-	} else if (shaderScript.type == "x-shader/x-vertex") {
+		str = fragmentShaderText;
+	} else if (id == "vertex") {
 		shader = gl.createShader(gl.VERTEX_SHADER);
+		str = vertexShaderText;
 	} else {
 		return null;
 	}
@@ -39,7 +51,7 @@ function getShader(gl, id) {
 	gl.compileShader(shader);
 
 	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		alert(gl.getShaderInfoLog(shader));
+		console.log(gl.getShaderInfoLog(shader));
 		return null;
 	}
 
@@ -50,9 +62,9 @@ function getShader(gl, id) {
 
 // Initializing the shader program
 
-function initShaders( gl ) {
-	var fragmentShader = getShader(gl, "shader-fs");
-	var vertexShader = getShader(gl, "shader-vs");
+export function initShaders( gl ) {
+	var fragmentShader = getShader(gl, "fragment");
+	var vertexShader = getShader(gl, "vertex");
 
 	var shaderProgram = gl.createProgram();
 	gl.attachShader(shaderProgram, vertexShader);
@@ -60,7 +72,7 @@ function initShaders( gl ) {
 	gl.linkProgram(shaderProgram);
 
 	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-		alert("Could not initialise shaders");
+		console.log("Could not initialise shaders");
 	}
 
 	gl.useProgram(shaderProgram);

@@ -1,0 +1,18 @@
+{
+  "name": "src",
+  "version": "1.0.0",
+  "description": "My impressive Nuxt.js project",
+  "author": "Andre Ribeiro Martins Marques Mourato",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "keydrown": "^1.2.7",
+    "nuxt": "^2.0.0"
+  },
+  "devDependencies": {}
+}

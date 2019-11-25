@@ -1,5 +1,5 @@
 
-class EntityModel {
+export class EntityModel {
     constructor(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,colors){
         this.tx = tx
         this.ty = ty

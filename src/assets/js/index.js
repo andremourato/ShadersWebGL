@@ -4,6 +4,14 @@
 // Global Variables
 //
 
+var {EntityModel} = require('~/assets/js/EntityModel.js')
+var {initShaders} = require('~/assets/js/initShaders.js')
+require('~/assets/js/webgl-utils.js')
+var kd = require('keydrown')
+var {perspective, flatten, mult,
+	rotationZZMatrix,rotationYYMatrix,rotationXXMatrix,
+	scalingMatrix,translationMatrix} = require('~/assets/js/maths.js')
+
 //SETTINGS
 var gl = null; // WebGL context
 var shaderProgram = null;
@@ -114,7 +122,7 @@ function drawScene() {
 // Timer
 //----------------------------------------------------------------------------
 function tick() {
-	requestAnimFrame(tick);
+	window.requestAnimFrame(tick);
 	drawScene();
 	animate();
 }
@@ -188,7 +196,8 @@ function resize() {
 //----------------------------------------------------------------------------
 // Running WebGL
 //----------------------------------------------------------------------------
-function runWebGL() {
+export function runWebGL() {
+	console.log('loading webgl')
 	var canvas = document.getElementById("my-canvas");
 	initWebGL( canvas );
 	loadModels()
@@ -209,6 +218,7 @@ function initWebGL( canvas ) {
 		// Create the WebGL context
 		// Some browsers still need "experimental-webgl"
 		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+		console.log(gl)
 		resize()
 		// DEFAULT: Face culling is DISABLED
 		// Enable FACE CULLING
@@ -226,7 +236,7 @@ function initWebGL( canvas ) {
 		console.log('ERROR: ',e)
 	}
 	if (!gl) {
-		alert("Could not initialise WebGL, sorry! :-(");
+		console.log("Could not initialise WebGL, sorry! :-(");
 	}        
 }
 
@@ -361,3 +371,4 @@ function getModelFromFile(filename){
 		colors
 	);
 }
+
