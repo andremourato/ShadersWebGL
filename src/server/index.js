@@ -13,7 +13,7 @@ app.get('/models', function (req, res) {
 		//handling error
 		if (err) {
 			return console.log('Unable to scan directory: ' + err);
-		} 
+    } 
 		//listing all files using forEach
 		files.forEach(function (file) {
       var originalFile = file
@@ -52,6 +52,7 @@ app.get('/scenes', function (req, res) {
 		if (err) {
 			return console.log('Unable to scan directory: ' + err);
 		} 
+    console.log(files)
 		//listing all files using forEach
 		files.forEach(function (file) {
       var originalFile = file

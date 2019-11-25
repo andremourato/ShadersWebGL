@@ -1,26 +1,26 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//  Mathematical export functions 
+//  Mathematical functions 
 //
 //  Ref. Original code from the Angel / Shreiner examples
 //	
-//	Additional export functions by J. Madeira - Sep./Oct. 2015
+//	Additional functions by J. Madeira - Sep./Oct. 2015
 //
 //////////////////////////////////////////////////////////////////////////////
 
 //----------------------------------------------------------------------------
 //
-//  Helper export functions
+//  Helper functions
 //
 
-export function _argumentsToArray( args )
+function _argumentsToArray( args )
 {
     return [].concat.apply( [], Array.prototype.slice.apply(args) );
 }
 
 //----------------------------------------------------------------------------
 
-export function radians( degrees ) {
+function radians( degrees ) {
     return degrees * Math.PI / 180.0;
 }
 
@@ -29,7 +29,7 @@ export function radians( degrees ) {
 //  Vector Constructors
 //
 
-export function vec2()
+function vec2()
 {
     var result = _argumentsToArray( arguments );
 
@@ -41,7 +41,7 @@ export function vec2()
     return result.splice( 0, 2 );
 }
 
-export function vec3()
+function vec3()
 {
     var result = _argumentsToArray( arguments );
 
@@ -54,7 +54,7 @@ export function vec3()
     return result.splice( 0, 3 );
 }
 
-export function vec4()
+function vec4()
 {
     var result = _argumentsToArray( arguments );
 
@@ -73,7 +73,7 @@ export function vec4()
 //  Matrix Constructors
 //
 
-export function mat2()
+function mat2()
 {
     var v = _argumentsToArray( arguments );
 
@@ -101,7 +101,7 @@ export function mat2()
 
 //----------------------------------------------------------------------------
 
-export function mat3()
+function mat3()
 {
     var v = _argumentsToArray( arguments );
 
@@ -131,7 +131,7 @@ export function mat3()
 
 //----------------------------------------------------------------------------
 
-export function mat4()
+function mat4()
 {
     var v = _argumentsToArray( arguments );
 
@@ -166,7 +166,7 @@ export function mat4()
 //  Generic Mathematical Operations for Vectors and Matrices
 //
 
-export function equal( u, v )
+function equal( u, v )
 {
     if ( u.length != v.length ) { return false; }
    
@@ -192,7 +192,7 @@ export function equal( u, v )
 
 //----------------------------------------------------------------------------
 
-export function add( u, v )
+function add( u, v )
 {
     var result = [];
 
@@ -233,7 +233,7 @@ export function add( u, v )
 
 //----------------------------------------------------------------------------
 
-export function subtract( u, v )
+function subtract( u, v )
 {
     var result = [];
 
@@ -276,7 +276,7 @@ export function subtract( u, v )
 
 //----------------------------------------------------------------------------
 
-export function mult( u, v )
+function mult( u, v )
 {
     var result = [];
 
@@ -322,10 +322,10 @@ export function mult( u, v )
 
 //----------------------------------------------------------------------------
 //
-//  Matrix export functions
+//  Matrix functions
 //
 
-export function transpose( m )
+function transpose( m )
 {
     if ( !m.matrix ) {
         return "transpose(): trying to transpose a non-matrix";
@@ -346,10 +346,10 @@ export function transpose( m )
 
 //----------------------------------------------------------------------------
 //
-//  Helper export function: Column-major 1D representation
+//  Helper function: Column-major 1D representation
 //
 
-export function flatten( v )
+function flatten( v )
 {
     if ( v.matrix === true ) {
         v = transpose( v );
@@ -401,7 +401,7 @@ var sizeof = {
 //  Constructing the 4 x 4 transformation matrices - J. Madeira 
 //
 
-export function rotationXXMatrix( degrees )
+function rotationXXMatrix( degrees )
 {
 	var m = mat4();
 	
@@ -416,7 +416,7 @@ export function rotationXXMatrix( degrees )
 	return m;	
 }
 
-export function rotationYYMatrix( degrees )
+function rotationYYMatrix( degrees )
 {
 	var m = mat4();
 	
@@ -431,7 +431,7 @@ export function rotationYYMatrix( degrees )
 	return m;	
 }
 
-export function rotationZZMatrix( degrees )
+function rotationZZMatrix( degrees )
 {
 	var m = mat4();
 	
@@ -446,7 +446,7 @@ export function rotationZZMatrix( degrees )
 	return m;	
 }
 
-export function scalingMatrix( sx, sy, sz )
+function scalingMatrix( sx, sy, sz )
 {
 	var m = mat4();
 	
@@ -459,7 +459,7 @@ export function scalingMatrix( sx, sy, sz )
 	return m;	
 }
 
-export function translationMatrix( tx, ty, tz )
+function translationMatrix( tx, ty, tz )
 {
 	var m = mat4();
 	
@@ -477,7 +477,7 @@ export function translationMatrix( tx, ty, tz )
 //  Projection Matrix Generators - Angel / Shreiner
 //
 
-export function ortho( left, right, bottom, top, near, far )
+function ortho( left, right, bottom, top, near, far )
 {
     if ( left == right ) { throw "ortho(): left and right are equal"; }
     if ( bottom == top ) { throw "ortho(): bottom and top are equal"; }
@@ -501,7 +501,7 @@ export function ortho( left, right, bottom, top, near, far )
 
 //----------------------------------------------------------------------------
 
-export function perspective( fovy, aspect, near, far )
+function perspective( fovy, aspect, near, far )
 {
     var f = 1.0 / Math.tan( radians(fovy) / 2 );
     var d = far - near;

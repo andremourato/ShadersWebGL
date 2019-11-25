@@ -1,24 +1,17 @@
 {
   "name": "src",
   "version": "1.0.0",
-  "description": "My impressive Nuxt.js project",
-  "author": "Andre Ribeiro Martins Marques Mourato",
-  "private": true,
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "nuxt",
-    "build": "nuxt build",
-    "start": "nuxt start",
-    "generate": "nuxt generate",
-    "server": "nodemon server/index.js"
+    "dev": "nodemon server/index.js"
   },
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
-    "keydrown": "^1.2.7",
-    "nodemon": "^2.0.1",
-    "nuxt": "^2.0.0"
-  },
-  "devDependencies": {}
+    "nodemon": "^2.0.1"
+  }
 }

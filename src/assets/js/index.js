@@ -4,19 +4,10 @@
 // Global Variables
 //
 
-var {Model} = require('~/assets/js/Model.js')
-var {Entity} = require('~/assets/js/Entity.js')
-var {initShaders} = require('~/assets/js/initShaders.js')
-require('~/assets/js/webgl-utils.js')
-var kd = require('keydrown')
-var axios = require('axios')
-var {perspective, flatten, mult,
-	rotationZZMatrix,rotationYYMatrix,rotationXXMatrix,
-	scalingMatrix,translationMatrix} = require('~/assets/js/maths.js')
-
 //SETTINGS
 var gl = null; // WebGL context
 var shaderProgram = null;
+var currentSceneIndex = 0;
 
 // SPEED
 const GLOBAL_SPEED = 0.03;
@@ -49,42 +40,53 @@ var scene_list = []
 //----------------------------------------------------------------------------
 //  Rendering
 // Handling the Vertex and the Color Buffers
-function initBuffers(model) {
+function initBuffers(object) {
 	
 	// Coordinates
 		
-	model.triangleVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, model.triangleVertexPositionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.vertices), gl.STATIC_DRAW);
-	model.triangleVertexPositionBuffer.itemSize = 3;
-	model.triangleVertexPositionBuffer.numItems = model.vertices.length / 3;			
+	object.triangleVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, object.triangleVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.vertices), gl.STATIC_DRAW);
+	object.triangleVertexPositionBuffer.itemSize = 3;
+	object.triangleVertexPositionBuffer.numItems = object.model.vertices.length / 3;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
-			model.triangleVertexPositionBuffer.itemSize, 
+			object.triangleVertexPositionBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
 	
 	// Colors
 		
-	model.triangleVertexColorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, model.triangleVertexColorBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model.colors), gl.STATIC_DRAW);
-	model.triangleVertexColorBuffer.itemSize = 3;
-	model.triangleVertexColorBuffer.numItems = model.colors.length / 3;			
+	object.triangleVertexColorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, object.triangleVertexColorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.colors), gl.STATIC_DRAW);
+	object.triangleVertexColorBuffer.itemSize = 3;
+	object.triangleVertexColorBuffer.numItems = object.model.colors.length / 3;			
 
 	// Associating to the vertex shader
 	
 	gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-			model.triangleVertexColorBuffer.itemSize, 
+			object.triangleVertexColorBuffer.itemSize, 
 			gl.FLOAT, false, 0, 0);
+}
+
+function printInfo(){
+	var numAttribs = gl.getProgramParameter(shaderProgram, gl.ACTIVE_ATTRIBUTES);
+	for (var ii = 0; ii < numAttribs; ++ii) {
+	var attribInfo = gl.getActiveAttrib(shaderProgram, ii);
+	if (!attribInfo) {
+		break;
+	}
+		console.log(gl.getAttribLocation(shaderProgram, attribInfo.name), attribInfo.name);
+	}
 }
 
 //----------------------------------------------------------------------------
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 function drawScene() {
-
+	var currentScene = scene_list[currentSceneIndex]
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -92,23 +94,15 @@ function drawScene() {
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	// Passing the Model View Matrix to apply the current transformation
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	var pMatrix = perspective( 45, 0.5, 0.05, 10 );
 	// A standard view volume.
 	// Viewer is at (0,0,0)
 	// Ensure that the model is "inside" the view volume
-	var pMatrix = perspective( 45, 1, 0.05, 10 );
-
-	var scene = scene_list[0] //HARDCODED: REMOVE LATER
-	//console.log(scene)
-	for(var i = 0; i < scene.objects.length;i++){
-		var object = scene.objects[i]
-		//console.log(object.model)
-		object.tz = -1.5;
-
+	for(var i = 0; i < currentScene.objects.length; i++){
+		var object = currentScene.objects[i]
+		object.tz = -1.5 //TODO: REMOVE LATER
 		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 		// Computing the Model-View Matrix
-		// Pay attention to the matrix multiplication order!!
-		// First transformation ?
-		// Last transformation ?
 		var mvMatrix = mult( rotationZZMatrix( object.angleZZ ), 
 							scalingMatrix( object.sx, object.sy, object.sz ) );
 		mvMatrix = mult( rotationYYMatrix( object.angleYY ), mvMatrix );
@@ -117,10 +111,7 @@ function drawScene() {
 
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 		// Drawing the contents of the vertex buffer
-		// primitiveType allows drawing as filled triangles / wireframe / vertices
-		object.tz = -1.5;
-		console.log(object.model.triangleVertexPositionBuffer.numItems)
-		gl.drawArrays(gl.TRIANGLES, 0, object.model.triangleVertexPositionBuffer.numItems);
+		gl.drawArrays(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems);
 	}
 }
 
@@ -158,19 +149,19 @@ function setEventListeners(){
 
 	//Guide the camera
 	kd.W.down(function () {
-		model_list[0].ty += ty_speed;
+		console.log('w')
 	});	
 
 	kd.A.down(function () {
-		model_list[0].tx -= tx_speed;
+		console.log('a')
 	});	
 
 	kd.S.down(function () {
-		model_list[0].ty -= ty_speed;
+		console.log('s')
 	});	
 
 	kd.D.down(function () {
-		model_list[0].tx += tx_speed;
+		console.log('d')
 	});	
 
 	kd.Q.down(function () {
@@ -202,21 +193,34 @@ function resize() {
 //----------------------------------------------------------------------------
 // Running WebGL
 //----------------------------------------------------------------------------
-export async function runWebGL() {
+async function runWebGL() {
 	console.log('Loading webgl...')
 	var canvas = document.getElementById("my-canvas");
 	initWebGL( canvas );
-	await loadModels()
+	var mod_arr = await loadModels()
+	mod_arr.models.forEach(x => {
+		model_list.push(new Model(x.vertices,x.colors))
+	})
 	console.log('Loaded all models!')
-	await loadScenes()
+	var sc_arr = await fetchScenes()
+	console.log(sc_arr)
+	sc_arr.scenes.forEach(scene => {
+		var newScene = {
+			name: scene.name,
+			objects: []
+		}
+		scene.objects.forEach((obj) => {
+			var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,modelname} = obj
+			newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,getModel(modelname)))
+		})
+		scene_list.push(newScene)
+	})
 	console.log('Loaded all scenes!')
 	setEventListeners();
 	shaderProgram = initShaders( gl );
 	//Initializes all different models of objects
-	console.log(model_list)
-	for(var i = 0; i < model_list.length; i++){
-		initBuffers(model_list[i]);
-	}
+	currentSceneIndex = 0
+	loadCurrentScene()
 	tick();	// A timer controls the rendering / animation
 }
 
@@ -249,24 +253,22 @@ function initWebGL( canvas ) {
 	}        
 }
 
-function loadScenes(){
+function loadCurrentScene(){
+	var scene = scene_list[currentSceneIndex]
+	console.log(scene)
+	for(var i = 0; i < scene.objects.length; i++){
+		initBuffers(scene.objects[i])
+	}
+	console.log('BUffers inited')
+}
+
+function fetchScenes(){
 	return new Promise(function(resolve, reject){
 		// Make a request for a user with a given ID
-		axios.get('http://localhost:8000/scenes')
-		.then(function (response) {
+		fetch('http://localhost:8000/scenes')
+		.then(async function (response) {
 			// handle success
-			response.data.scenes.forEach(scene => {
-				var newScene = {
-					name: scene.name,
-					objects: []
-				}
-				scene.objects.forEach((obj) => {
-					var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,modelname} = obj
-					newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,getModel(modelname)))
-				})
-				scene_list.push(newScene)
-			})
-			resolve({'status':'ok'})
+			resolve(await response.json())
 		})
 		.catch(function (error) {
 			// handle error
@@ -286,13 +288,10 @@ function getModel(name){
 function loadModels(){
 	return new Promise(function(resolve, reject){
 		// Make a request for a user with a given ID
-		axios.get('http://localhost:8000/models')
-		.then(function (response) {
+		fetch('http://localhost:8000/models')
+		.then(async function (response) {
 			// handle success
-			response.data.models.forEach(x => {
-				model_list.push(new Model(x.vertices,x.colors))
-			})
-			resolve({'status':'ok'})
+			resolve(await response.json())
 		})
 		.catch(function (error) {
 			// handle error

@@ -1,5 +1,5 @@
 
-export class Entity {
+class Entity {
     constructor(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,model){
         this.tx = tx
         this.ty = ty
@@ -11,5 +11,7 @@ export class Entity {
         this.sy = sy;
         this.sz = sz;
         this.model = model
+        this.triangleVertexPositionBuffer = null
+        this.triangleVertexColorBuffer = null
     }
 }

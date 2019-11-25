@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	
+<!--
+
+ShadersWebGL
+
+André Mourato e Nuno Félix
+
+-->
+	
+<title>WebGL example 18 &mdash; Animation</title>
+
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<!--
+
+The simple vertex and fragment shaders.
+
+Using a vertex coordinate buffer and a vertex colour buffer.
+
+Passing the Model-View Matrix and the Projection Matrix. 
+
+-->
+
+<script id="shader-vs" type="x-shader/x-vertex">
+	
+    attribute vec3 aVertexPosition;
+
+    attribute vec3 aVertexColor;
+    
+    uniform mat4 uMVMatrix;
+
+    uniform mat4 uPMatrix;
+
+    varying vec4 vertexColor;
+    
+    void main(void) {
+		
+		// To allow seeing the points drawn
+		
+		gl_PointSize = 5.0;
+		
+		// Just converting the (x,y,z) vertices to Homogeneous Coord.
+		
+		// And multiplying by the Projection and the Model-View matrix
+		
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        
+        // Converting the RGB color value to RGBA
+        
+        vertexColor = vec4(aVertexColor, 1.0);
+    }
+</script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+
+	precision mediump float;
+	
+	varying vec4 vertexColor;
+	
+	void main(void) {
+		
+		// Using the passed vertex color
+		
+		gl_FragColor = vertexColor;
+	}
+
+</script>
+
+<!-- The JS files -->
+
+<!-- Some useful functions for browser compatibility -->
+<script src="https://jeremyckahn.github.io/keydrown/dist/keydrown.js"></script>
+<script src="https://jeremyckahn.github.io/keydrown/dist/keydrown.min.js"></script>
+<script type="text/javascript" src="assets/js/webgl-utils.js"></script>
+
+<!-- Handling vectors and matrices -->
+
+<script type="text/javascript" src="assets/js/maths.js"></script>
+
+<!-- WebGL code -->
+
+<script type="text/javascript" src="assets/js/initShaders.js"></script>
+<script type="text/javascript" src="assets/js/Entity.js"></script>
+<script type="text/javascript" src="assets/js/Model.js"></script>
+
+<script type="text/javascript" src="assets/js/index.js"></script>
+
+<style>
+    .container {
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .title {
+      font-family: 'Quicksand', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      display: block;
+      font-weight: 300;
+      font-size: 100px;
+      color: #35495e;
+      letter-spacing: 1px;
+    }
+    
+    .subtitle {
+      font-weight: 300;
+      font-size: 42px;
+      color: #526488;
+      word-spacing: 5px;
+      padding-bottom: 15px;
+    }
+    
+    .links {
+      padding-top: 15px;
+    }
+    </style>
+    
+
+</head>
+
+<body onload="runWebGL();">
+	<div id="containerDiv" style="text-align: center">
+		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
+	</div>
+</body>
+
+</html>
