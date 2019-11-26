@@ -9,6 +9,21 @@ var gl = null; // WebGL context
 var shaderProgram = null;
 var currentSceneIndex = 0;
 
+//CAMERA
+var fieldOfViewDegrees = 45
+var aspect = 9/16
+var zNear = 0.05
+var zFar = 2000
+var cameraX = 0
+var cameraY = 0
+var cameraZ = 0
+var cameraAngleX = 0
+var cameraAngleY = 0
+var cameraAngleZ = 0
+var cameraScaleX = 0.5
+var cameraScaleY = 0.5
+var cameraScaleZ = 0.5
+
 // SPEED
 const GLOBAL_SPEED = 0.03;
 var tx_speed = GLOBAL_SPEED;
@@ -91,22 +106,24 @@ function drawScene() {
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	// Passing the Model View Matrix to apply the current transformation
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	var pMatrix = perspective( 45, 0.5, 0.05, 10 );
-	// A standard view volume.
-	// Viewer is at (0,0,0)
-	// Ensure that the model is "inside" the view volume
+	var pMatrix = perspective( fieldOfViewDegrees, aspect, zNear, zFar );
+	pMatrix = mult( translationMatrix( cameraX, cameraY, cameraZ ), pMatrix );
+	pMatrix = mult( rotationXXMatrix( cameraAngleX ), pMatrix );
+	pMatrix = mult( rotationYYMatrix( cameraAngleY ), pMatrix );
+	pMatrix = mult( rotationZZMatrix( cameraAngleZ ), pMatrix );
+	pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
+	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	var currentScene = scene_list[currentSceneIndex]
 	for(var i = 0; i < currentScene.objects.length; i++){
 		var obj = currentScene.objects[i]
-		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 		// Computing the Model-View Matrix
 		var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
 							scalingMatrix( obj.sx, obj.sy, obj.sz ) );
 		mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
 		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
 		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
-
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+
 		// Drawing the contents of the vertex buffer
 		//gl.drawElements(gl.TRIANGLES, 0, object.triangleVertexPositionBuffer.numItems, 0);
 		gl.drawArrays(gl.TRIANGLES, 0, obj.triangleVertexPositionBuffer.numItems);
@@ -136,7 +153,9 @@ function animate() {
 	var timeNow = new Date().getTime();
 	if( lastTime != 0 ) {
 		var elapsed = timeNow - lastTime;
-		//model_list[1].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+		for(var i = 0; i < scene_list[0].objects.length; i++){
+			scene_list[0].objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+		}
 	}
 	lastTime = timeNow;
 }
@@ -148,18 +167,22 @@ function setEventListeners(){
 	//Guide the camera
 	kd.W.down(function () {
 		console.log('w')
+		cameraY += 0.1
 	});	
 
 	kd.A.down(function () {
 		console.log('a')
+		cameraX -= 0.1
 	});	
 
 	kd.S.down(function () {
 		console.log('s')
+		cameraY -= 0.1
 	});	
 
 	kd.D.down(function () {
 		console.log('d')
+		cameraX += 0.1
 	});	
 
 	kd.Q.down(function () {
@@ -174,7 +197,6 @@ function setEventListeners(){
 function resize() {
 
 	var ratio = 16/9
-	console.log(window.innerWidth)
 	var targetHeight = window.innerWidth * 1/ratio;
 
 	if (window.innerHeight > targetHeight) {
@@ -196,7 +218,11 @@ async function runWebGL() {
 	var canvas = document.getElementById("my-canvas");
 	var mod_arr = await loadModels()
 	mod_arr.models.forEach(x => {
-		model_list.push({name:x.name,vertices:x.vertices,colors:x.colors})
+		model_list.push(new Model(x.name,x.vertices,x.colors))
+	})
+	mod_arr = await loadModelsJson()
+	mod_arr.models.forEach(x => {
+		model_list.push(new Model(x.name,x.vertices,generateColor(x.vertices.length)))
 	})
 	var sc_arr = await fetchScenes()
 	sc_arr.scenes.forEach(scene => {
@@ -214,8 +240,6 @@ async function runWebGL() {
 		scene_list.push(newScene)
 	})
 	initWebGL( canvas );
-	console.log('Loaded all models!')
-	console.log('Loaded all scenes!')
 	setEventListeners();
 	shaderProgram = initShaders( gl );
 	//Initializes all different models of objects
@@ -253,6 +277,13 @@ function initWebGL( canvas ) {
 	}        
 }
 
+function generateColor(n){
+	arr = []
+	for(var i = 0; i < n; i++)
+		arr.push(0)
+	return arr
+}
+
 function loadCurrentScene(){
 	var scene = scene_list[currentSceneIndex]
 	for(var i = 0; i < scene.objects.length; i++){
@@ -266,6 +297,7 @@ function fetchScenes(){
 		fetch('http://localhost:8000/scenes')
 		.then(async function (response) {
 			// handle success
+			console.log('Loaded all scenes!')
 			resolve(await response.json())
 		})
 		.catch(function (error) {
@@ -283,12 +315,33 @@ function getModel(name){
 	return {...model_list.filter(x => x.name == name)[0]}
 }
 
+function loadModelsJson(){
+	return new Promise(function(resolve, reject){
+		// Make a request for a user with a given ID
+		fetch('http://localhost:8000/models_json')
+		.then(async function (response) {
+			// handle success
+			console.log('Loaded all json models!')
+			resolve(await response.json())
+		})
+		.catch(function (error) {
+			// handle error
+			console.log(error);
+			reject(error)
+		})
+		.finally(function () {
+			// always executed
+		});
+	})
+}
+
 function loadModels(){
 	return new Promise(function(resolve, reject){
 		// Make a request for a user with a given ID
 		fetch('http://localhost:8000/models')
 		.then(async function (response) {
 			// handle success
+			console.log('Loaded all models!')
 			resolve(await response.json())
 		})
 		.catch(function (error) {

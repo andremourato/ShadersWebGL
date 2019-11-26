@@ -1,6 +1,7 @@
 
 class Model {
-    constructor(vertices,colors){
+    constructor(name,vertices,colors){
+        this.name = name
         this.vertices = vertices
         this.colors = colors
     }

@@ -4,6 +4,30 @@ var cors = require('cors');
 const app = express()
 app.use(cors()); 
 
+app.get('/models_json', function (req, res) {
+  var body = {
+    models: []
+  }
+  var directoryPath = 'assets/modelsJson/'
+	fs.readdir(directoryPath, function (err, files) {
+		//handling error
+		if (err) {
+			return console.log('Unable to scan directory: ' + err);
+    } 
+		//listing all files using forEach
+		files.forEach(function (file) {
+      // Do whatever you want to do with the file
+      file = directoryPath + file
+      console.log('Loaded model from',file);
+      let rawdata = fs.readFileSync(file);
+      let model = JSON.parse(rawdata);
+      body.models = model.meshes
+    });
+    res.send(body)
+	});
+})
+
+
 app.get('/models', function (req, res) {
   var body = {
     models: []
@@ -41,6 +65,7 @@ app.get('/models', function (req, res) {
     res.send(body)
 	});
 })
+
 
 app.get('/scenes', function (req, res) {
   var body = {
