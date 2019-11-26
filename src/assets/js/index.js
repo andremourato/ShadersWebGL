@@ -75,6 +75,7 @@ var boxVertices =
 var gl = null; // WebGL context
 var shaderProgram = null;
 var currentSceneIndex = 0;
+var rotate = false
 
 //CAMERA
 var fieldOfViewDegrees = 45
@@ -225,7 +226,8 @@ function animate() {
 	if( lastTime != 0 ) {
 		var elapsed = timeNow - lastTime;
 		for(var i = 0; i < scene_list[0].objects.length; i++){
-			scene_list[0].objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+			if(rotate)
+				scene_list[0].objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
 		}
 	}
 	lastTime = timeNow;
@@ -235,24 +237,30 @@ function setEventListeners(){
 
     window.addEventListener('resize', function() {resize()}, false);
 
+	window.addEventListener("keypress", (event) => {
+		var key = event.keyCode
+		if(key == 82 || key == 114)
+			rotate = !rotate
+	});
+
 	//Guide the camera
 	kd.W.down(function () {
-		console.log('w')
+		// console.log('w')
 		cameraY += 0.1
 	});	
 
 	kd.A.down(function () {
-		console.log('a')
+		// console.log('a')
 		cameraX -= 0.1
 	});	
 
 	kd.S.down(function () {
-		console.log('s')
+		// console.log('s')
 		cameraY -= 0.1
 	});	
 
 	kd.D.down(function () {
-		console.log('d')
+		// console.log('d')
 		cameraX += 0.1
 	});	
 
