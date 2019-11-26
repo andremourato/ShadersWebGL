@@ -71,8 +71,6 @@ var boxVertices =
 		22, 20, 23
 	];
 
-var boxTexture = null
-
 //SETTINGS
 var gl = null; // WebGL context
 var shaderProgram = null;
@@ -130,7 +128,6 @@ function initBuffers(obj) {
 	// Coordinates
 	var boxVertexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
-	console.log(boxVertices)
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxVertices), gl.STATIC_DRAW);
 
 	//Indices
@@ -180,7 +177,6 @@ function drawScene() {
 	pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	var currentScene = scene_list[currentSceneIndex]
-	// refreshTextures()
 	for(var i = 0; i < currentScene.objects.length; i++){
 		var obj = currentScene.objects[i]
 		// Computing the Model-View Matrix
@@ -190,24 +186,19 @@ function drawScene() {
 		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
 		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-
-		gl.bindTexture(gl.TEXTURE_2D,boxTexture);
-		gl.activeTexture(gl.TEXTURE0);
+		refreshTexture(obj)
 		// Drawing the contents of the vertex buffer
 		//gl.drawElements(gl.TRIANGLES, 0, object.boxVertexBufferObject.numItems, 0);
 		// if(!obj.indices)
 		// 	gl.drawArrays(gl.TRIANGLES, 0, obj.boxVertexBufferObject.numItems);
 		// else
-			gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
 	}
 }
 
-function refreshTextures(){
-	for(var i = 0; i < textures_available; i++){
-		var t = textures_available[i]
-		gl.bindTexture(gl.TEXTURE_2D, t);
-		gl.activeTexture(gl.TEXTURE0);
-	}
+function refreshTexture(obj){
+	gl.bindTexture(gl.TEXTURE_2D, obj.texture.texture);
+	gl.activeTexture(gl.TEXTURE0);
 }
 
 //----------------------------------------------------------------------------
@@ -296,13 +287,13 @@ function resize() {
 //----------------------------------------------------------------------------
 async function runWebGL() {
 	var canvas = document.getElementById("my-canvas");
+	initWebGL( canvas );
+	shaderProgram = initShaders( gl );
 	await loadModels()
 	await loadModelsJson()
-	await loadScenes()
 	await loadTextures()
-	initWebGL( canvas );
+	await loadScenes()
 	setEventListeners();
-	shaderProgram = initShaders( gl );
 	//Initializes all different models of objects
 	currentSceneIndex = 0
 	loadCurrentScene()
@@ -338,19 +329,13 @@ function initWebGL( canvas ) {
 	}        
 }
 
-function generateColor(n){
-	arr = []
-	for(var i = 0; i < n; i++)
-		arr.push(0)
-	return arr
-}
-
 function loadCurrentScene(){
 	var scene = scene_list[currentSceneIndex]
 	for(var i = 0; i < scene.objects.length; i++){
 		initBuffers(scene.objects[i])
 	}
 }
+
 
 function loadScenes(){
 	return new Promise(function(resolve, reject){
@@ -361,13 +346,14 @@ function loadScenes(){
 					objects: []
 				}
 				scene.objects.forEach((obj) => {
-					var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,name} = obj
+					var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,name,texture} = obj
+					console.log(obj)
 					var model = getModel(name)
-					console.log(model)
 					var vertices = [...model.vertices]
 					var colors = [...model.colors]
 					var indices = model.indices ? [...model.indices] : null
-					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,colors,indices})
+					texture = getTexture(texture)
+					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,colors,indices,texture})
 				})
 				scene_list.push(newScene)
 			})
@@ -389,6 +375,17 @@ function fetchScenes(){
 			reject(error)
 		})
 	})
+}
+
+function generateColor(n){
+	arr = []
+	for(var i = 0; i < n; i++)
+		arr.push(0)
+	return arr
+}
+
+function getTexture(name){
+	return textures_available.filter(x => {return x.name == name})[0]
 }
 
 function getModel(name){
@@ -457,12 +454,17 @@ function loadTextures() {
 				var imageName = texture_list[i]
 				image.crossOrigin="anonymous"
 				image.src = 'http://127.0.0.1:8000/static/'+texture_list[i];
-				image.id = imageName
+				image.id = i
+				image.name = texture_list[i]
 				image.style.visibility = 'hidden';
+				var texture = gl.createTexture();
+				textures_available.push({name:texture_list[i].split('.')[0],texture,image})
 				//document.getElementById('containerDiv').appendChild(image);
 				image.onload = function (im) {
-					var text = gl.createTexture();
-					gl.bindTexture(gl.TEXTURE_2D, text);
+					var id = im.path[0].id
+					var textureName = textures_available[id].name
+					var texture = textures_available[id].texture
+					gl.bindTexture(gl.TEXTURE_2D, texture);
 					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -470,16 +472,11 @@ function loadTextures() {
 					gl.texImage2D(
 						gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
 						gl.UNSIGNED_BYTE,
-						image
+						textures_available[id].image
 					);
-					gl.bindTexture(gl.TEXTURE_2D, null);
-					textures_available.push(text)
-					if(im.path[0].id == 'crate.png'){
-						boxTexture = text
-					}
-					console.log('Image',im.path[0].id,'has been loaded!')
+					console.log('Texture',textureName,'has been loaded!')
+					resolve()
 				};
-			resolve()
 			}
 		})
 	})

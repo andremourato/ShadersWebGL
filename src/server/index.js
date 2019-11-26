@@ -119,6 +119,7 @@ app.get('/scenes', function (req, res) {
           sy: parseFloat(obj[7]),
           sz: parseFloat(obj[8]),
           name: obj[9],
+          texture: obj[10]
         })
       }
       body.scenes.push(scene)
