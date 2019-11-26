@@ -4,6 +4,23 @@ var cors = require('cors');
 const app = express()
 app.use(cors()); 
 
+app.use('/static', express.static('assets/textures'))
+
+app.get('/textures', function (req, res) {
+  var body = {
+    textures: []
+  }
+  var directoryPath = 'assets/textures/'
+	fs.readdir(directoryPath, function (err, files) {
+		//handling error
+		if (err) {
+			return console.log('Unable to scan directory: ' + err);
+    }
+    body.textures = files
+    res.send(body)
+	});
+})
+
 app.get('/models_json', function (req, res) {
   var body = {
     models: []
@@ -21,7 +38,8 @@ app.get('/models_json', function (req, res) {
       console.log('Loaded model from',file);
       let rawdata = fs.readFileSync(file);
       let model = JSON.parse(rawdata);
-      body.models = model.meshes
+      model.meshes.forEach(x => x.indices = x.faces.flat())
+      model.meshes.forEach(x => body.models.push(x))
     });
     res.send(body)
 	});
@@ -46,7 +64,7 @@ app.get('/models', function (req, res) {
       console.log('Loaded model from',file);
       var contents = fs.readFileSync(file, 'utf8').toString().split('\n');
       var num_lines = parseInt(contents[0])
-      var half_point = num_lines / 2
+      var half_point = num_lines
       var model = {
         name: originalFile.split('.')[0],
         vertices: [],
@@ -58,9 +76,8 @@ app.get('/models', function (req, res) {
       for(var i = half_point+1; i < contents.length-1; i++){
         contents[i].trim().split(' ').map(x => parseFloat(x)).forEach(e => {model.colors.push(e)})
       }
-      //console.log(contents)
+      model.indices = null
       body.models.push(model)
-      //console.log(body.models)
     });
     res.send(body)
 	});

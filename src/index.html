@@ -30,13 +30,13 @@ Passing the Model-View Matrix and the Projection Matrix.
 	
     attribute vec3 aVertexPosition;
 
-    attribute vec3 aVertexColor;
+    attribute vec2 vertTexCoord;
     
     uniform mat4 uMVMatrix;
 
     uniform mat4 uPMatrix;
 
-    varying vec4 vertexColor;
+    varying vec2 fragTexCoord;
     
     void main(void) {
 		
@@ -52,21 +52,19 @@ Passing the Model-View Matrix and the Projection Matrix.
         
         // Converting the RGB color value to RGBA
         
-        vertexColor = vec4(aVertexColor, 1.0);
+  		fragTexCoord = vertTexCoord;
     }
 </script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
 
 	precision mediump float;
-	
-	varying vec4 vertexColor;
-	
-	void main(void) {
-		
-		// Using the passed vertex color
-		
-		gl_FragColor = vertexColor;
+
+	varying vec2 fragTexCoord;
+	uniform sampler2D sampler;
+
+	void main() {
+		gl_FragColor = texture2D(sampler, fragTexCoord);
 	}
 
 </script>
