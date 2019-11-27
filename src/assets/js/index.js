@@ -72,7 +72,7 @@ function initBuffers(obj) {
 	var objIndexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
-
+	
 	// Associating to the vertex shader
 	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
 	gl.vertexAttribPointer(
@@ -102,7 +102,7 @@ function initBuffers(obj) {
 function drawScene() {
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
-
+	
 	// Passing the Projection Matrix to apply the current projection
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	// Passing the Model View Matrix to apply the current transformation
@@ -124,6 +124,7 @@ function drawScene() {
 		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
 		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+		initBuffers(obj)
 		refreshTexture(obj)
 		// Drawing the contents of the vertex buffer
 		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
@@ -247,7 +248,6 @@ async function runWebGL() {
 	setEventListeners();
 	//Initializes all different models of objects
 	currentSceneIndex = 0
-	loadCurrentScene()
 	tick();	// A timer controls the rendering / animation
 }
 
