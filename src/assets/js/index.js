@@ -10,20 +10,23 @@ var shaderProgram = null;
 var currentSceneIndex = 0;
 var rotate = false
 
-//CAMERA
-var fieldOfViewDegrees = 45
-var aspect = 9/16
-var zNear = 0.05
-var zFar = 2000
-var cameraX = 0
-var cameraY = 0
-var cameraZ = 0
-var cameraAngleX = 0
-var cameraAngleY = 0
-var cameraAngleZ = 0
-var cameraScaleX = 0.5
-var cameraScaleY = 1
-var cameraScaleZ = 0.5
+//CAMERA parameters
+
+//camera.fieldOfViewDegrees
+//camera.aspect
+//camera.zNear
+//camera.zFar
+//camera.tx
+//camera.ty
+//camera.tz
+//camera.angleX
+//camera.angleY
+//camera.angleZ
+//camera.scaleX
+//camera.scaleY
+//camera.scaleZ
+//cameraSpeed
+var camera = new Camera(45,1,0.05,2000,0,0,0,0,0,0,0.5,1,0.5,0.1)
 
 // SPEED
 const GLOBAL_SPEED = 0.03;
@@ -107,12 +110,12 @@ function drawScene() {
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	// Passing the Model View Matrix to apply the current transformation
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	var pMatrix = perspective( fieldOfViewDegrees, aspect, zNear, zFar );
-	pMatrix = mult( translationMatrix( cameraX, cameraY, cameraZ ), pMatrix );
-	pMatrix = mult( rotationXXMatrix( cameraAngleX ), pMatrix );
-	pMatrix = mult( rotationYYMatrix( cameraAngleY ), pMatrix );
-	pMatrix = mult( rotationZZMatrix( cameraAngleZ ), pMatrix );
-	pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
+	var pMatrix = perspective( camera.fieldOfViewDegrees, camera.aspect, camera.zNear, camera.zFar );
+	pMatrix = mult( translationMatrix( camera.tx, camera.ty, camera.tz ), pMatrix );
+	pMatrix = mult( rotationXXMatrix( camera.angleX ), pMatrix );
+	pMatrix = mult( rotationYYMatrix( camera.angleY ), pMatrix );
+	pMatrix = mult( rotationZZMatrix( camera.angleZ ), pMatrix );
+	pMatrix = mult( scalingMatrix(camera.scaleX,camera.scaleY,camera.scaleZ),pMatrix)
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	var currentScene = scene_list[currentSceneIndex]
 	for(var i = 0; i < currentScene.objects.length; i++){
@@ -190,22 +193,22 @@ function setEventListeners(){
 	//Guide the camera
 	kd.W.down(function () {
 		// console.log('w')
-		cameraY += 0.1
+		camera.ty += 0.1
 	});	
 
 	kd.A.down(function () {
 		// console.log('a')
-		cameraX -= 0.1
+		camera.tx -= 0.1
 	});	
 
 	kd.S.down(function () {
 		// console.log('s')
-		cameraY -= 0.1
+		camera.ty -= 0.1
 	});	
 
 	kd.D.down(function () {
 		// console.log('d')
-		cameraX += 0.1
+		camera.tx += 0.1
 	});	
 
 	kd.Q.down(function () {
@@ -218,20 +221,23 @@ function setEventListeners(){
 }
 
 function resize() {
-
-	var ratio = 1
-	var targetHeight = window.innerWidth * 1/ratio;
+	var targetHeight = window.innerWidth * 9/16;
 
 	if (window.innerHeight > targetHeight) {
 		// Center vertically
 		gl.canvas.width = window.innerWidth;
 		gl.canvas.height = targetHeight;
+		gl.canvas.style.left = '0px';
+		gl.canvas.style.top = (window.innerHeight - targetHeight) / 2 + 'px';
 	} else {
 		// Center horizontally
-		gl.canvas.width = (window.innerHeight) * ratio;
+		gl.canvas.width = window.innerHeight * 16 / 9;
 		gl.canvas.height = window.innerHeight;
+		gl.canvas.style.left = (window.innerWidth - (gl.canvas.width)) / 2 + 'px';
+		gl.canvas.style.top = '0px';
 	}
-	gl.viewport(0, 0, gl.canvas.height,gl.canvas.width);
+
+	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
 //----------------------------------------------------------------------------
@@ -309,7 +315,7 @@ function loadScenes(){
 					var texCoords = [...model.texCoords]
 					var indices = model.indices ? [...model.indices] : null
 					texture = getTexture(texture)
-					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,simpleGeometry:model.simpleGeometry})
+					newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,model.simpleGeometry))
 				})
 				scenesHTML.options[scenesHTML.options.length] = new Option('Scene '+i, i);
 				i += 1

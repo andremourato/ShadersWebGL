@@ -90,10 +90,48 @@ app.get('/models', function (req, res) {
 
 
 app.get('/scenes', function (req, res) {
+  var directoryPath = 'assets/scenes/'
+  //Builds the maze
+  //TODO: COMPLETE THE MAZE ALGORITHM
+  // var wallSize = 0.2
+  // var maze = [[0,0,0,0],
+  //             [0,1,1,0],
+  //             [0,1,1,0],
+  //             [0,1,0,0]]
+  // var N = maze.length
+  // // var maze = [[0,0,0,0,1,0,0],
+  // //             [0,1,1,1,1,0,0],
+  // //             [0,1,0,0,1,1,1],
+  // //             [0,1,1,1,0,0,0],
+  // //             [0,1,0,1,1,0,0],
+  // //             [0,1,0,0,1,0,0],
+  // //             [0,1,0,0,0,0,0]]
+  // var payload = ''
+  // for(var y = 0; y < N; y++){
+  //   for(var x = 0; x < N; x++){
+  //     var px = 2* x * wallSize + wallSize
+  //     var py = -wallSize*2
+  //     var pz = 0
+  //     //0 = wall
+  //     //1 = path
+  //     var type = 'null'
+  //     if(maze[y][x] == 0){
+  //       type = ' Cube Blue1'
+  //     }else{ //Paints the floor
+  //       type += ' Cube Gray'
+  //     }
+  //     payload += px+' '+py+' '+pz+' '+' 0 0 0 '+wallSize+' '+wallSize+' '+wallSize+' '+type+'\n'
+  //   }
+  // }
+  // fs.writeFile(directoryPath+'1-maze.txt', payload, function(err) {
+  //   console.log('Maze written to file!')
+  // });
+
+
+  //Reads the scenes from files
   var body = {
     scenes: []
   }
-  var directoryPath = 'assets/scenes/'
 	fs.readdir(directoryPath, function (err, files) {
 		//handling error
 		if (err) {

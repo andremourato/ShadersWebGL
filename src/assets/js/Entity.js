@@ -1,6 +1,6 @@
 
 class Entity {
-    constructor(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,model){
+    constructor(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture){
         this.tx = tx
         this.ty = ty
         this.tz = tz
@@ -10,8 +10,9 @@ class Entity {
         this.sx = sx;
         this.sy = sy;
         this.sz = sz;
-        this.model = model
-        this.triangleVertexPositionBuffer = null
-        this.triangleVertexColorBuffer = null
+        this.vertices = vertices
+        this.texCoords = texCoords
+        this.indices = indices
+        this.texture = texture
     }
 }
