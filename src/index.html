@@ -85,6 +85,7 @@ Passing the Model-View Matrix and the Projection Matrix.
 <script type="text/javascript" src="assets/js/initShaders.js"></script>
 <script type="text/javascript" src="assets/js/Entity.js"></script>
 <script type="text/javascript" src="assets/js/Model.js"></script>
+<script type="text/javascript" src="assets/js/Camera.js"></script>
 
 <script type="text/javascript" src="assets/js/index.js"></script>
 
@@ -95,14 +96,20 @@ Passing the Model-View Matrix and the Projection Matrix.
 			padding: 0;
 			position: absolute;
 		}
+		.scene-input {
+			position: absolute;
+			right:20%
+		}
 </style>
     
-
 </head>
 
 <body onload="runWebGL();">
 	<div id="containerDiv" style="text-align: center">
 		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
+	</div>
+	<div>
+		<select class="scene-input" id="scenes">
 	</div>
 </body>
 

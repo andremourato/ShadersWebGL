@@ -10,20 +10,23 @@ var shaderProgram = null;
 var currentSceneIndex = 0;
 var rotate = false
 
-//CAMERA
-var fieldOfViewDegrees = 45
-var aspect = 9/16
-var zNear = 0.05
-var zFar = 2000
-var cameraX = 0
-var cameraY = 0
-var cameraZ = 0
-var cameraAngleX = 0
-var cameraAngleY = 0
-var cameraAngleZ = 0
-var cameraScaleX = 0.5
-var cameraScaleY = 1
-var cameraScaleZ = 0.5
+//CAMERA parameters
+
+//camera.fieldOfViewDegrees
+//camera.aspect
+//camera.zNear
+//camera.zFar
+//camera.tx
+//camera.ty
+//camera.tz
+//camera.angleX
+//camera.angleY
+//camera.angleZ
+//camera.scaleX
+//camera.scaleY
+//camera.scaleZ
+//cameraSpeed
+var camera = new Camera(45,1,0.05,2000,0,0,0,0,0,0,0.5,1,0.5,0.1)
 
 // SPEED
 const GLOBAL_SPEED = 0.03;
@@ -58,7 +61,6 @@ var textures_available = []
 //  Rendering
 // Handling the Vertex and the Color Buffers
 function initBuffers(obj) {
-	console.log(obj)
 	// Coordinates
 	var objPosVertexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
@@ -73,9 +75,8 @@ function initBuffers(obj) {
 	var objIndexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
-
+	
 	// Associating to the vertex shader
-	//var multiplier = obj.simpleGeometry ? 5 : 3
 	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
 	gl.vertexAttribPointer(
 		shaderProgram.positionAttribLocation, 
@@ -109,17 +110,17 @@ function generateShadows() {
 function drawScene() {
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
-
+	
 	// Passing the Projection Matrix to apply the current projection
 	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 	// Passing the Model View Matrix to apply the current transformation
 	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	var pMatrix = perspective( fieldOfViewDegrees, aspect, zNear, zFar );
-	pMatrix = mult( translationMatrix( cameraX, cameraY, cameraZ ), pMatrix );
-	pMatrix = mult( rotationXXMatrix( cameraAngleX ), pMatrix );
-	pMatrix = mult( rotationYYMatrix( cameraAngleY ), pMatrix );
-	pMatrix = mult( rotationZZMatrix( cameraAngleZ ), pMatrix );
-	pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
+	var pMatrix = perspective( camera.fieldOfViewDegrees, camera.aspect, camera.zNear, camera.zFar );
+	pMatrix = mult( translationMatrix( camera.tx, camera.ty, camera.tz ), pMatrix );
+	pMatrix = mult( rotationXXMatrix( camera.angleX ), pMatrix );
+	pMatrix = mult( rotationYYMatrix( camera.angleY ), pMatrix );
+	pMatrix = mult( rotationZZMatrix( camera.angleZ ), pMatrix );
+	pMatrix = mult( scalingMatrix(camera.scaleX,camera.scaleY,camera.scaleZ),pMatrix)
 	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
 	var currentScene = scene_list[currentSceneIndex]
 	for(var i = 0; i < currentScene.objects.length; i++){
@@ -131,6 +132,7 @@ function drawScene() {
 		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
 		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+		initBuffers(obj)
 		refreshTexture(obj)
 		// Drawing the contents of the vertex buffer
 		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
@@ -168,15 +170,22 @@ function animate() {
 	var timeNow = new Date().getTime();
 	if( lastTime != 0 ) {
 		var elapsed = timeNow - lastTime;
-		for(var i = 0; i < scene_list[0].objects.length; i++){
+		var currentScene = scene_list[currentSceneIndex]
+		for(var i = 0; i < currentScene.objects.length; i++){
 			if(rotate)
-				scene_list[0].objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+				currentScene.objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
 		}
 	}
 	lastTime = timeNow;
 }
 
 function setEventListeners(){
+
+	document.getElementById('scenes').addEventListener('change',(event) => {
+		var e = document.getElementById("scenes");
+		currentSceneIndex = e.options[e.selectedIndex].value;
+		loadCurrentScene()
+	})
 
     window.addEventListener('resize', function() {resize()}, false);
 
@@ -189,22 +198,22 @@ function setEventListeners(){
 	//Guide the camera
 	kd.W.down(function () {
 		// console.log('w')
-		cameraY += 0.1
+		camera.ty += 0.1
 	});	
 
 	kd.A.down(function () {
 		// console.log('a')
-		cameraX -= 0.1
+		camera.tx -= 0.1
 	});	
 
 	kd.S.down(function () {
 		// console.log('s')
-		cameraY -= 0.1
+		camera.ty -= 0.1
 	});	
 
 	kd.D.down(function () {
 		// console.log('d')
-		cameraX += 0.1
+		camera.tx += 0.1
 	});	
 
 	kd.Q.down(function () {
@@ -217,20 +226,23 @@ function setEventListeners(){
 }
 
 function resize() {
-
-	var ratio = 1
-	var targetHeight = window.innerWidth * 1/ratio;
+	var targetHeight = window.innerWidth * 9/16;
 
 	if (window.innerHeight > targetHeight) {
 		// Center vertically
 		gl.canvas.width = window.innerWidth;
 		gl.canvas.height = targetHeight;
+		gl.canvas.style.left = '0px';
+		gl.canvas.style.top = (window.innerHeight - targetHeight) / 2 + 'px';
 	} else {
 		// Center horizontally
-		gl.canvas.width = (window.innerHeight) * ratio;
+		gl.canvas.width = window.innerHeight * 16 / 9;
 		gl.canvas.height = window.innerHeight;
+		gl.canvas.style.left = (window.innerWidth - (gl.canvas.width)) / 2 + 'px';
+		gl.canvas.style.top = '0px';
 	}
-	gl.viewport(0, 0, gl.canvas.height,gl.canvas.width);
+
+	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
   }
 
 //----------------------------------------------------------------------------
@@ -247,7 +259,6 @@ async function runWebGL() {
 	setEventListeners();
 	//Initializes all different models of objects
 	currentSceneIndex = 0
-	loadCurrentScene()
 	tick();	// A timer controls the rendering / animation
 }
 
@@ -262,7 +273,11 @@ function initWebGL( canvas ) {
 		resize()
 		// DEFAULT: Face culling is DISABLED
 		// Enable FACE CULLING
-		gl.enable( gl.CULL_FACE );
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.CULL_FACE);
+		gl.frontFace(gl.CCW);
+		gl.cullFace(gl.BACK);
 
 		// DEFAULT: The BACK FACE is culled!!
 		// The next instruction is not needed...
@@ -291,6 +306,8 @@ function loadCurrentScene(){
 function loadScenes(){
 	return new Promise(function(resolve, reject){
 		fetchScenes().then((sc_arr) => {
+			var i = 0
+			var scenesHTML = document.getElementById('scenes');
 			sc_arr.scenes.forEach(scene => {
 				var newScene = {
 					name: scene.name,
@@ -303,8 +320,10 @@ function loadScenes(){
 					var texCoords = [...model.texCoords]
 					var indices = model.indices ? [...model.indices] : null
 					texture = getTexture(texture)
-					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,simpleGeometry:model.simpleGeometry})
+					newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,model.simpleGeometry))
 				})
+				scenesHTML.options[scenesHTML.options.length] = new Option('Scene '+i, i);
+				i += 1
 				scene_list.push(newScene)
 			})
 			resolve()
@@ -330,7 +349,7 @@ function fetchScenes(){
 function generateColor(n){
 	arr = []
 	for(var i = 0; i < n; i++)
-		arr.push(0)
+		arr.push(Math.random())
 	return arr
 }
 
@@ -351,7 +370,7 @@ function loadModelsJson(){
 					x.texCoords = generateColor(x.vertices.length)
 				else{
 					simpleGeometry = false
-					x.texCoords = x.texturecoords[0]
+					x.texCoords = x.texturecoords
 				}
 				model_list.push(new Model(x.name,x.vertices,x.texCoords,x.indices,simpleGeometry))
 			})
