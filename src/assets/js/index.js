@@ -262,7 +262,11 @@ function initWebGL( canvas ) {
 		resize()
 		// DEFAULT: Face culling is DISABLED
 		// Enable FACE CULLING
-		gl.enable( gl.CULL_FACE );
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.CULL_FACE);
+		gl.frontFace(gl.CCW);
+		gl.cullFace(gl.BACK);
 
 		// DEFAULT: The BACK FACE is culled!!
 		// The next instruction is not needed...
@@ -334,7 +338,7 @@ function fetchScenes(){
 function generateColor(n){
 	arr = []
 	for(var i = 0; i < n; i++)
-		arr.push(0)
+		arr.push(Math.random())
 	return arr
 }
 
