@@ -101,6 +101,11 @@ function initBuffers(obj) {
 //----------------------------------------------------------------------------
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
+
+function generateShadows() {
+	gl
+}
+
 function drawScene() {
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
