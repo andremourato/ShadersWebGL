@@ -1,9 +1,10 @@
 
 class Model {
-    constructor(name,vertices,colors,indices){
+    constructor(name,vertices,texCoords,indices,simpleGeometry){
         this.name = name
         this.vertices = vertices
-        this.colors = colors
+        this.texCoords = texCoords
         this.indices = indices
+        this.simpleGeometry = simpleGeometry
     }
 }

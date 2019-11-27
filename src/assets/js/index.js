@@ -4,73 +4,6 @@
 // Global Variables
 //
 
-//TESTING
-var boxVertices = 
-	[ // X, Y, Z           U, V
-		// Top
-		-1.0, 1.0, -1.0,   0, 0,
-		-1.0, 1.0, 1.0,    0, 1,
-		1.0, 1.0, 1.0,     1, 1,
-		1.0, 1.0, -1.0,    1, 0,
-
-		// Left
-		-1.0, 1.0, 1.0,    0, 0,
-		-1.0, -1.0, 1.0,   1, 0,
-		-1.0, -1.0, -1.0,  1, 1,
-		-1.0, 1.0, -1.0,   0, 1,
-
-		// Right
-		1.0, 1.0, 1.0,    1, 1,
-		1.0, -1.0, 1.0,   0, 1,
-		1.0, -1.0, -1.0,  0, 0,
-		1.0, 1.0, -1.0,   1, 0,
-
-		// Front
-		1.0, 1.0, 1.0,    1, 1,
-		1.0, -1.0, 1.0,    1, 0,
-		-1.0, -1.0, 1.0,    0, 0,
-		-1.0, 1.0, 1.0,    0, 1,
-
-		// Back
-		1.0, 1.0, -1.0,    0, 0,
-		1.0, -1.0, -1.0,    0, 1,
-		-1.0, -1.0, -1.0,    1, 1,
-		-1.0, 1.0, -1.0,    1, 0,
-
-		// Bottom
-		-1.0, -1.0, -1.0,   1, 1,
-		-1.0, -1.0, 1.0,    1, 0,
-		1.0, -1.0, 1.0,     0, 0,
-		1.0, -1.0, -1.0,    0, 1,
-	];
-
-	var boxIndices =
-	[
-		// Top
-		0, 1, 2,
-		0, 2, 3,
-
-		// Left
-		5, 4, 6,
-		6, 4, 7,
-
-		// Right
-		8, 9, 10,
-		8, 10, 11,
-
-		// Front
-		13, 12, 14,
-		15, 14, 12,
-
-		// Back
-		16, 17, 18,
-		16, 18, 19,
-
-		// Bottom
-		21, 20, 22,
-		22, 20, 23
-	];
-
 //SETTINGS
 var gl = null; // WebGL context
 var shaderProgram = null;
@@ -125,37 +58,43 @@ var textures_available = []
 //  Rendering
 // Handling the Vertex and the Color Buffers
 function initBuffers(obj) {
-	
+	console.log(obj)
 	// Coordinates
-	var boxVertexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(boxVertices), gl.STATIC_DRAW);
+	var objPosVertexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+	//Texture
+	var objTexCoordVertexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
 
 	//Indices
-	var boxIndexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObject);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(boxIndices), gl.STATIC_DRAW);
+	var objIndexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 
 	// Associating to the vertex shader
-	
+	//var multiplier = obj.simpleGeometry ? 5 : 3
+	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
 	gl.vertexAttribPointer(
 		shaderProgram.positionAttribLocation, 
 		3, 
 		gl.FLOAT,
 		gl.FALSE,
-		5*Float32Array.BYTES_PER_ELEMENT,
+		3*Float32Array.BYTES_PER_ELEMENT,
 		0);
+	gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
 
 	// Associating to the vertex shader
-	
+	gl.bindBuffer(gl.ARRAY_BUFFER,objTexCoordVertexBufferObject)
 	gl.vertexAttribPointer(
 		shaderProgram.texCoordAttribLocation, 
 		2, 
 		gl.FLOAT,
 		gl.FALSE,
-		5 * Float32Array.BYTES_PER_ELEMENT,
-		3 * Float32Array.BYTES_PER_ELEMENT);
-	gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
+		2 * Float32Array.BYTES_PER_ELEMENT,
+		0);
 	gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
 }
 
@@ -189,11 +128,10 @@ function drawScene() {
 		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
 		refreshTexture(obj)
 		// Drawing the contents of the vertex buffer
-		//gl.drawElements(gl.TRIANGLES, 0, object.boxVertexBufferObject.numItems, 0);
-		// if(!obj.indices)
-		// 	gl.drawArrays(gl.TRIANGLES, 0, obj.boxVertexBufferObject.numItems);
-		// else
-		gl.drawElements(gl.TRIANGLES, boxIndices.length, gl.UNSIGNED_SHORT, 0);
+		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
+			// console.log('got here',obj)
+			// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
+			gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 }
 
@@ -355,13 +293,12 @@ function loadScenes(){
 				}
 				scene.objects.forEach((obj) => {
 					var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,name,texture} = obj
-					console.log(obj)
 					var model = getModel(name)
 					var vertices = [...model.vertices]
-					var colors = [...model.colors]
+					var texCoords = [...model.texCoords]
 					var indices = model.indices ? [...model.indices] : null
 					texture = getTexture(texture)
-					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,colors,indices,texture})
+					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,simpleGeometry:model.simpleGeometry})
 				})
 				scene_list.push(newScene)
 			})
@@ -404,7 +341,14 @@ function loadModelsJson(){
 	return new Promise(function(resolve, reject){
 		fetchModelsJson().then((mod_arr) => {
 			mod_arr.models.forEach(x => {
-				model_list.push(new Model(x.name,x.vertices,generateColor(x.vertices.length),x.indices))
+				var simpleGeometry = true
+				if(!x.texturecoords)
+					x.texCoords = generateColor(x.vertices.length)
+				else{
+					simpleGeometry = false
+					x.texCoords = x.texturecoords[0]
+				}
+				model_list.push(new Model(x.name,x.vertices,x.texCoords,x.indices,simpleGeometry))
 			})
 			resolve()
 		})
@@ -431,7 +375,7 @@ function loadModels(){
 	return new Promise(function(resolve, reject){
 		fetchModels().then((mod_arr) => {
 			mod_arr.models.forEach(x => {
-				model_list.push(new Model(x.name,x.vertices,x.colors,x.indices))
+				model_list.push(new Model(x.name,x.vertices,generateColor(x.vertices.length),x.indices))
 			})
 			resolve()
 		})
@@ -472,6 +416,7 @@ function loadTextures() {
 					var id = im.path[0].id
 					var textureName = textures_available[id].name
 					var texture = textures_available[id].texture
+					gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)
 					gl.bindTexture(gl.TEXTURE_2D, texture);
 					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
