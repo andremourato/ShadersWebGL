@@ -58,7 +58,6 @@ var textures_available = []
 //  Rendering
 // Handling the Vertex and the Color Buffers
 function initBuffers(obj) {
-	console.log(obj)
 	// Coordinates
 	var objPosVertexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
@@ -75,7 +74,6 @@ function initBuffers(obj) {
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 
 	// Associating to the vertex shader
-	//var multiplier = obj.simpleGeometry ? 5 : 3
 	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
 	gl.vertexAttribPointer(
 		shaderProgram.positionAttribLocation, 
@@ -163,15 +161,22 @@ function animate() {
 	var timeNow = new Date().getTime();
 	if( lastTime != 0 ) {
 		var elapsed = timeNow - lastTime;
-		for(var i = 0; i < scene_list[0].objects.length; i++){
+		var currentScene = scene_list[currentSceneIndex]
+		for(var i = 0; i < currentScene.objects.length; i++){
 			if(rotate)
-				scene_list[0].objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+				currentScene.objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
 		}
 	}
 	lastTime = timeNow;
 }
 
 function setEventListeners(){
+
+	document.getElementById('scenes').addEventListener('change',(event) => {
+		var e = document.getElementById("scenes");
+		currentSceneIndex = e.options[e.selectedIndex].value;
+		loadCurrentScene()
+	})
 
     window.addEventListener('resize', function() {resize()}, false);
 
@@ -286,6 +291,8 @@ function loadCurrentScene(){
 function loadScenes(){
 	return new Promise(function(resolve, reject){
 		fetchScenes().then((sc_arr) => {
+			var i = 0
+			var scenesHTML = document.getElementById('scenes');
 			sc_arr.scenes.forEach(scene => {
 				var newScene = {
 					name: scene.name,
@@ -300,6 +307,8 @@ function loadScenes(){
 					texture = getTexture(texture)
 					newScene.objects.push({tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,simpleGeometry:model.simpleGeometry})
 				})
+				scenesHTML.options[scenesHTML.options.length] = new Option('Scene '+i, i);
+				i += 1
 				scene_list.push(newScene)
 			})
 			resolve()
@@ -346,7 +355,7 @@ function loadModelsJson(){
 					x.texCoords = generateColor(x.vertices.length)
 				else{
 					simpleGeometry = false
-					x.texCoords = x.texturecoords[0]
+					x.texCoords = x.texturecoords
 				}
 				model_list.push(new Model(x.name,x.vertices,x.texCoords,x.indices,simpleGeometry))
 			})

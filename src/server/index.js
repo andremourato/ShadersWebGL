@@ -38,9 +38,12 @@ app.get('/models_json', function (req, res) {
       console.log('Loaded model from',file);
       let rawdata = fs.readFileSync(file);
       let model = JSON.parse(rawdata);
-      model.meshes.forEach(x => x.indices = x.faces.flat())
-      if(model.meshes.texcoords)
-        model.meshes.texcoords = model.meshes.texcoords[0]
+      model.meshes.forEach(x => {
+        x.indices = x.faces.flat()
+        if(x.texturecoords){
+          x.texturecoords = x.texturecoords[0]
+        }
+      })
       model.meshes.forEach(x => body.models.push(x))
     });
     res.send(body)
