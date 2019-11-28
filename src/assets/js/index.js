@@ -112,7 +112,7 @@ function drawScene() {
 		gl.uniform4fv(
 			noShadowProgram.uniforms.meshColor,
 			//mudar para carregar textura
-			vec4.fromValues(0.8,0.8,1.0,1.0)
+			vec4.fromValues(obj.colors)
 		);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, obj.vbo);
@@ -140,20 +140,6 @@ function drawScene() {
 			2 * Float32Array.BYTES_PER_ELEMENT,
 			0);
 		gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
-
-
-		// console.log(obj)
-
-		// var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
-		// 					scalingMatrix( obj.sx, obj.sy, obj.sz ) );
-		// mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
-		// mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
-		// mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
-
-		// console.log(mvMatrix);
-
-		// gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-		
 		
 		// initBuffers(obj)
 		refreshTexture(obj)

@@ -1,7 +1,6 @@
 
 class Entity {
     constructor(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,normals,texCoords,indices,texture){
-        
         this.tx = tx
         this.ty = ty
         this.tz = tz
