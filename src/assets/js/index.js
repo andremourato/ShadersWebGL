@@ -178,16 +178,15 @@ function drawScene() {
 		);
 		gl.enableVertexAttribArray(shadowProgram.attribs.vNorm);
 
-		// gl.bindBuffer(gl.ARRAY_BUFFER, obj.tbo)
 		// gl.vertexAttribPointer(
-		// 	noShadowProgram.texCoordAttribLocation,
+		// 	shaderProgram.texCoordAttribLocation,
 		// 	2,
 		// 	gl.FLOAT,
 		// 	gl.FALSE,
 		// 	2 * Float32Array.BYTES_PER_ELEMENT,
-		// 	0);
+		// 	0* Float32Array.BYTES_PER_ELEMENT);
 		// gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
-
+		
 		// initBuffers(obj)
 		refreshTexture(obj)
 
@@ -423,6 +422,7 @@ async function runWebGL() {
 	shadowMapProgram = initShaders(gl, 'shadowmap')
 	loadShaders();
 
+	// await loadModelsObj()
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
@@ -629,6 +629,39 @@ function fetchScenes() {
 	})
 }
 
+function loadModelsObj() {
+	return new Promise(function (resolve, reject) {
+		fetchModelsObj().then((mod_arr) => {
+			mod_arr.models.forEach(x => {
+				var simpleGeometry = true
+				if (!x.texturecoords)
+					x.texCoords = generateColor(x.vertices.length)
+				else {
+					simpleGeometry = false
+					x.texCoords = x.texturecoords
+				}
+				model_list.push(new Model(x.name, x.vertices, x.normals, x.texCoords, x.indices, simpleGeometry))
+			})
+			resolve()
+		})
+	})
+}
+
+function fetchModelsObj() {
+	return new Promise(function (resolve, reject) {
+		// Make a request for a user with a given ID
+		fetch('http://localhost:8000/models_obj')
+			.then(async function (response) {
+				// handle success
+				console.log('Loaded all models obj!')
+				resolve(await response.json())
+			})
+			.catch(function (error) {
+				reject(error)
+			})
+	})
+}
+
 function generateColor(n) {
 	arr = []
 	for (var i = 0; i < n; i++)
@@ -781,6 +814,7 @@ function loadTextures() {
 						gl.UNSIGNED_BYTE,
 						textures_available[id].image
 					);
+					gl.bindTexture(gl.TEXTURE_2D, null);
 					console.log('Texture', textureName, 'has been loaded!')
 					resolve()
 				};
