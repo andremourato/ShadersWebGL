@@ -7,27 +7,25 @@
 //SETTINGS
 var gl = null; // WebGL context
 var shaderProgram = null;
+var noShadowProgram = null;
 var currentSceneIndex = 0;
 var rotate = false
+var lightPosition = null
+var lightX = 0
+var lightY = 0.0
+var lightZ = 3.0 
 
 //CAMERA parameters
 
-//camera.fieldOfViewDegrees
-//camera.aspect
-//camera.zNear
-//camera.zFar
-//camera.tx
-//camera.ty
-//camera.tz
-//camera.angleX
-//camera.angleY
-//camera.angleZ
-//camera.scaleX
-//camera.scaleY
-//camera.scaleZ
-//cameraSpeed
-var camera = new Camera(45,1,0.05,2000,0,0,0,0,0,0,0.5,1,0.5,0.1)
+var camera = new Camera(
+	vec3.fromValues(0, 0, 1.85),
+	vec3.fromValues(-0.3, -1, 1.85),
+	vec3.fromValues(0, 0, 1)
+);
+var cameraSpeed = 0.2
 
+var projMatrix = mat4.create();
+var viewMatrix = mat4.create();
 // SPEED
 const GLOBAL_SPEED = 0.03;
 var tx_speed = GLOBAL_SPEED;
@@ -61,23 +59,9 @@ var textures_available = []
 //  Rendering
 // Handling the Vertex and the Color Buffers
 function initBuffers(obj) {
-	// Coordinates
-	var objPosVertexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
-
-	//Texture
-	var objTexCoordVertexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
-
-	//Indices
-	var objIndexBufferObject = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 	
 	// Associating to the vertex shader
-	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
+	gl.bindBuffer(gl.ARRAY_BUFFER,obj.vbo)
 	gl.vertexAttribPointer(
 		shaderProgram.positionAttribLocation, 
 		3, 
@@ -103,42 +87,82 @@ function initBuffers(obj) {
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 
-function generateShadows() {
-	gl
-}
-
 function drawScene() {
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	
-	// Passing the Projection Matrix to apply the current projection
-	var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-	// Passing the Model View Matrix to apply the current transformation
-	var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-	var pMatrix = perspective( camera.fieldOfViewDegrees, camera.aspect, camera.zNear, camera.zFar );
-	pMatrix = mult( translationMatrix( camera.tx, camera.ty, camera.tz ), pMatrix );
-	pMatrix = mult( rotationXXMatrix( camera.angleX ), pMatrix );
-	pMatrix = mult( rotationYYMatrix( camera.angleY ), pMatrix );
-	pMatrix = mult( rotationZZMatrix( camera.angleZ ), pMatrix );
-	pMatrix = mult( scalingMatrix(camera.scaleX,camera.scaleY,camera.scaleZ),pMatrix)
-	gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(pMatrix)));
+
+	camera.GetViewMatrix(viewMatrix)
+
+	gl.uniformMatrix4fv(noShadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
+	gl.uniformMatrix4fv(noShadowProgram.uniforms.mView, gl.FALSE,viewMatrix);
+	gl.uniform3fv(noShadowProgram.uniforms.pointLightPosition, lightPosition);
+
 	var currentScene = scene_list[currentSceneIndex]
 	for(var i = 0; i < currentScene.objects.length; i++){
 		var obj = currentScene.objects[i]
+
 		// Computing the Model-View Matrix
-		var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
-							scalingMatrix( obj.sx, obj.sy, obj.sz ) );
-		mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
-		mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
-		mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
-		gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-		initBuffers(obj)
+		
+		gl.uniformMatrix4fv(
+			noShadowProgram.uniforms.mWorld,
+			gl.FALSE,
+			obj.world
+		);
+
+		gl.uniform4fv(
+			noShadowProgram.uniforms.meshColor,
+			//mudar para carregar textura
+			vec4.fromValues(0.8,0.8,1.0,1.0)
+		);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, obj.vbo);
+		gl.vertexAttribPointer(
+			noShadowProgram.attribs.vPos,
+			3, gl.FLOAT, gl.FALSE,
+			0, 0
+		);
+		gl.enableVertexAttribArray(noShadowProgram.attribs.vPos);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, obj.nbo);
+		gl.vertexAttribPointer(
+			noShadowProgram.attribs.vNorm,
+			3, gl.FLOAT, gl.FALSE,
+			0, 0
+		);
+		gl.enableVertexAttribArray(noShadowProgram.attribs.vNorm);	
+
+		gl.bindBuffer(gl.ARRAY_BUFFER,obj.tbo)
+		gl.vertexAttribPointer(
+			shaderProgram.texCoordAttribLocation, 
+			2, 
+			gl.FLOAT,
+			gl.FALSE,
+			2 * Float32Array.BYTES_PER_ELEMENT,
+			0);
+		gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
+
+
+		// console.log(obj)
+
+		// var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
+		// 					scalingMatrix( obj.sx, obj.sy, obj.sz ) );
+		// mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
+		// mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
+		// mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
+
+		// console.log(mvMatrix);
+
+		// gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+		
+		
+		// initBuffers(obj)
 		refreshTexture(obj)
-		// Drawing the contents of the vertex buffer
-		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
-			// console.log('got here',obj)
-			// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
-			gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.ibo);
+
+		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+
 	}
 }
 
@@ -172,15 +196,14 @@ function animate() {
 		var elapsed = timeNow - lastTime;
 		var currentScene = scene_list[currentSceneIndex]
 		for(var i = 0; i < currentScene.objects.length; i++){
-			if(rotate)
-				currentScene.objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
+			// if(rotate)
+			// 	currentScene.objects[i].angleYY += rotationYY_DIR * rotationYY_SPEED * (90 * elapsed) / 1000.0;
 		}
 	}
 	lastTime = timeNow;
 }
 
 function setEventListeners(){
-
 	document.getElementById('scenes').addEventListener('change',(event) => {
 		var e = document.getElementById("scenes");
 		currentSceneIndex = e.options[e.selectedIndex].value;
@@ -198,33 +221,32 @@ function setEventListeners(){
 	//Guide the camera
 	kd.W.down(function () {
 		// console.log('w')
-		camera.ty += 0.1
+		camera.moveForward(cameraSpeed)
 	});	
 
 	kd.A.down(function () {
 		// console.log('a')
-		camera.tx -= 0.1
+		camera.moveRight(-cameraSpeed)
 	});	
 
 	kd.S.down(function () {
 		// console.log('s')
-		camera.ty -= 0.1
+		camera.moveForward(-cameraSpeed)
 	});	
 
 	kd.D.down(function () {
 		// console.log('d')
-		camera.tx += 0.1
+		camera.moveRight(cameraSpeed)
 	});	
 
 	kd.Q.down(function () {
-		console.log('q')
+		camera.moveUp(cameraSpeed)
 	});	
 
 	kd.E.down(function () {
-		console.log('e')
-	});	
+		camera.moveUp(-cameraSpeed)
+	});
 }
-
 function resize() {
 	var targetHeight = window.innerWidth * 9/16;
 
@@ -251,8 +273,20 @@ function resize() {
 async function runWebGL() {
 	var canvas = document.getElementById("my-canvas");
 	initWebGL( canvas );
-	shaderProgram = initShaders( gl );
-	await loadModels()
+	shaderProgram = initShaders( gl,'shader' );
+	noShadowProgram = initShaders( gl ,'noshadow');
+
+	loadShaders();
+
+	mat4.perspective(
+		projMatrix,
+		glMatrix.toRadian(90),
+		gl.canvas.width / gl.canvas.height,
+		0.35,
+		85.0
+	);
+
+	// await loadModels()
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
@@ -260,6 +294,24 @@ async function runWebGL() {
 	//Initializes all different models of objects
 	currentSceneIndex = 0
 	tick();	// A timer controls the rendering / animation
+}
+
+function loadShaders(){
+	shaderProgram.positionAttribLocation = gl.getAttribLocation(shaderProgram, "vPos");
+	shaderProgram.texCoordAttribLocation = gl.getAttribLocation(shaderProgram, "vertTexCoord");
+
+	noShadowProgram.uniforms = {
+		mProj: gl.getUniformLocation(noShadowProgram, 'mProj'),
+		mView: gl.getUniformLocation(noShadowProgram, 'mView'),
+		mWorld: gl.getUniformLocation(noShadowProgram, 'mWorld'),
+
+		pointLightPosition: gl.getUniformLocation(noShadowProgram, 'pointLightPosition'),
+		meshColor: gl.getUniformLocation(noShadowProgram, 'meshColor'),
+	};
+	noShadowProgram.attribs = {
+		vPos: gl.getAttribLocation(noShadowProgram, 'vPos'),
+		vNorm: gl.getAttribLocation(noShadowProgram, 'vNorm'),
+	};
 }
 
 //----------------------------------------------------------------------------
@@ -298,7 +350,7 @@ function initWebGL( canvas ) {
 function loadCurrentScene(){
 	var scene = scene_list[currentSceneIndex]
 	for(var i = 0; i < scene.objects.length; i++){
-		initBuffers(scene.objects[i])
+		//initBuffers(scene.objects[i])
 	}
 }
 
@@ -315,12 +367,16 @@ function loadScenes(){
 				}
 				scene.objects.forEach((obj) => {
 					var {tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,name,texture} = obj
+					if(name == 'LightBulbMesh'){
+						lightPosition = vec3.fromValues(lightX,lightY,lightZ)
+					}
 					var model = getModel(name)
 					var vertices = [...model.vertices]
 					var texCoords = [...model.texCoords]
 					var indices = model.indices ? [...model.indices] : null
+					var normals = model.normals ?[...model.normals] : null
 					texture = getTexture(texture)
-					newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,texCoords,indices,texture,model.simpleGeometry))
+					newScene.objects.push(new Entity(tx,ty,tz,angleXX,angleYY,angleZZ,sx,sy,sz,vertices,normals,texCoords,indices,texture))
 				})
 				scenesHTML.options[scenesHTML.options.length] = new Option('Scene '+i, i);
 				i += 1
@@ -372,7 +428,7 @@ function loadModelsJson(){
 					simpleGeometry = false
 					x.texCoords = x.texturecoords
 				}
-				model_list.push(new Model(x.name,x.vertices,x.texCoords,x.indices,simpleGeometry))
+				model_list.push(new Model(x.name,x.vertices,x.normals,x.texCoords,x.indices,simpleGeometry))
 			})
 			resolve()
 		})

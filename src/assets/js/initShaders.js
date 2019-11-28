@@ -31,6 +31,10 @@ function getShader(gl, id) {
 		shader = gl.createShader(gl.FRAGMENT_SHADER);
 	} else if (shaderScript.type == "x-shader/x-vertex") {
 		shader = gl.createShader(gl.VERTEX_SHADER);
+	} else if (shaderScript.type == "x-noshadow/x-vertex"){
+		shader = gl.createShader(gl.VERTEX_SHADER);
+	} else if (shaderScript.type == "x-noshadow/x-fragment"){
+		shader = gl.createShader(gl.FRAGMENT_SHADER);
 	} else {
 		return null;
 	}
@@ -50,9 +54,9 @@ function getShader(gl, id) {
 
 // Initializing the shader program
 
-function initShaders( gl ) {
-	var fragmentShader = getShader(gl, "shader-fs");
-	var vertexShader = getShader(gl, "shader-vs");
+function initShaders( gl,shaderName ) {
+	var fragmentShader = getShader(gl, shaderName+"-fs");
+	var vertexShader = getShader(gl, shaderName+"-vs");
 
 	var shaderProgram = gl.createProgram();
 	gl.attachShader(shaderProgram, vertexShader);
@@ -65,13 +69,6 @@ function initShaders( gl ) {
 
 	gl.useProgram(shaderProgram);
 
-	// Coordinates 
-	
-	shaderProgram.positionAttribLocation = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-
-	// Colors 
-	
-	shaderProgram.texCoordAttribLocation = gl.getAttribLocation(shaderProgram, "vertTexCoord");
-	
 	return shaderProgram;
 }
+
