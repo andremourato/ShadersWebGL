@@ -116,11 +116,11 @@ function drawScene() {
 	gl.useProgram(shadowProgram);
 
 	//ver o dt
-	dt=16.6
-	lightDisplacementInputAngle += dt / 2337;
-	var displacement = Math.sin(lightDisplacementInputAngle) * 2.8;
+	// dt=16.6
+	// lightDisplacementInputAngle += dt / 2337;
+	// var displacement = Math.sin(lightDisplacementInputAngle) * 2.8;
 
-	lightPosition.world[12] = displacement;
+	// lightPosition.world[12] = displacement;
 	for (var i = 0; i < shadowMapCameras.length; i++) {
 		mat4.getTranslation(shadowMapCameras[i].position, lightPosition.world);
 		shadowMapCameras[i].GetViewMatrix(shadowMapViewMatrices[i]);
