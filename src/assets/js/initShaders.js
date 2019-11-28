@@ -27,14 +27,10 @@ function getShader(gl, id) {
 	}
 
 	var shader;
-	if (shaderScript.type == "x-shader/x-fragment") {
+	if (shaderScript.type.split("/")[1] == 'x-fragment') {
 		shader = gl.createShader(gl.FRAGMENT_SHADER);
-	} else if (shaderScript.type == "x-shader/x-vertex") {
+	} else if (shaderScript.type.split("/")[1] == 'x-vertex') {
 		shader = gl.createShader(gl.VERTEX_SHADER);
-	} else if (shaderScript.type == "x-noshadow/x-vertex"){
-		shader = gl.createShader(gl.VERTEX_SHADER);
-	} else if (shaderScript.type == "x-noshadow/x-fragment"){
-		shader = gl.createShader(gl.FRAGMENT_SHADER);
 	} else {
 		return null;
 	}
