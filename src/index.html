@@ -82,12 +82,17 @@ Passing the Model-View Matrix and the Projection Matrix.
 	varying vec3 fPos;
 	varying vec3 fNorm;
 
+    varying vec2 fragTexCoord;
+	attribute vec2 vertTexCoord;
+
 	void main()
 	{
 		fPos = (mWorld * vec4(vPos, 1.0)).xyz;
 		fNorm = (mWorld * vec4(vNorm, 0.0)).xyz;
 
 		gl_Position = mProj * mView * vec4(fPos, 1.0);
+
+		fragTexCoord = vertTexCoord;
 	}
 </script>
 
