@@ -104,7 +104,16 @@ function initBuffers(obj) {
 
 function drawScene() {
 	// Clearing with the background color
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	// Clear back buffer, set per-frame uniforms
+	gl.enable(gl.CULL_FACE);
+	gl.enable(gl.DEPTH_TEST);
+
+	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+	gl.clearColor(0, 0, 0, 1);
+	gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+
+	gl.useProgram(shadowProgram);
 
 	//ver o dt
 	dt=16.6
@@ -207,7 +216,7 @@ function tick() {
 //----------------------------------------------------------------------------
 
 function generateShadowMap(){
-	//gl.useProgram(shadowMapProgram);
+	gl.useProgram(shadowMapProgram);
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFramebuffer);
 	gl.bindRenderbuffer(gl.RENDERBUFFER, shadowMapRenderbuffer);
