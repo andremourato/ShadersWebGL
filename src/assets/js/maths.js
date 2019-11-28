@@ -29,7 +29,7 @@ function radians( degrees ) {
 //  Vector Constructors
 //
 
-function vec2()
+function vec2Math()
 {
     var result = _argumentsToArray( arguments );
 
@@ -41,7 +41,7 @@ function vec2()
     return result.splice( 0, 2 );
 }
 
-function vec3()
+function vec3Math()
 {
     var result = _argumentsToArray( arguments );
 
@@ -54,7 +54,7 @@ function vec3()
     return result.splice( 0, 3 );
 }
 
-function vec4()
+function vec4Math()
 {
     var result = _argumentsToArray( arguments );
 
@@ -73,7 +73,7 @@ function vec4()
 //  Matrix Constructors
 //
 
-function mat2()
+function mat2Math()
 {
     var v = _argumentsToArray( arguments );
 
@@ -83,14 +83,14 @@ function mat2()
         v[0] = 1;
     case 1:
         m = [
-            vec2( v[0],  0.0 ),
-            vec2(  0.0, v[0] )
+            vec2Math( v[0],  0.0 ),
+            vec2Math(  0.0, v[0] )
         ];
         break;
 
     default:
-        m.push( vec2(v) );  v.splice( 0, 2 );
-        m.push( vec2(v) );
+        m.push( vec2Math(v) );  v.splice( 0, 2 );
+        m.push( vec2Math(v) );
         break;
     }
 
@@ -101,7 +101,7 @@ function mat2()
 
 //----------------------------------------------------------------------------
 
-function mat3()
+function mat3Math()
 {
     var v = _argumentsToArray( arguments );
 
@@ -111,16 +111,16 @@ function mat3()
         v[0] = 1;
     case 1:
         m = [
-            vec3( v[0],  0.0,  0.0 ),
-            vec3(  0.0, v[0],  0.0 ),
-            vec3(  0.0,  0.0, v[0] )
+            vec3Math( v[0],  0.0,  0.0 ),
+            vec3Math(  0.0, v[0],  0.0 ),
+            vec3Math(  0.0,  0.0, v[0] )
         ];
         break;
 
     default:
-        m.push( vec3(v) );  v.splice( 0, 3 );
-        m.push( vec3(v) );  v.splice( 0, 3 );
-        m.push( vec3(v) );
+        m.push( vec3Math(v) );  v.splice( 0, 3 );
+        m.push( vec3Math(v) );  v.splice( 0, 3 );
+        m.push( vec3Math(v) );
         break;
     }
 
@@ -131,7 +131,7 @@ function mat3()
 
 //----------------------------------------------------------------------------
 
-function mat4()
+function mat4Math()
 {
     var v = _argumentsToArray( arguments );
 
@@ -141,18 +141,18 @@ function mat4()
         v[0] = 1;
     case 1:
         m = [
-            vec4( v[0], 0.0,  0.0,   0.0 ),
-            vec4( 0.0,  v[0], 0.0,   0.0 ),
-            vec4( 0.0,  0.0,  v[0],  0.0 ),
-            vec4( 0.0,  0.0,  0.0,  v[0] )
+            vec4Math( v[0], 0.0,  0.0,   0.0 ),
+            vec4Math( 0.0,  v[0], 0.0,   0.0 ),
+            vec4Math( 0.0,  0.0,  v[0],  0.0 ),
+            vec4Math( 0.0,  0.0,  0.0,  v[0] )
         ];
         break;
 
     default:
-        m.push( vec4(v) );  v.splice( 0, 4 );
-        m.push( vec4(v) );  v.splice( 0, 4 );
-        m.push( vec4(v) );  v.splice( 0, 4 );
-        m.push( vec4(v) );
+        m.push( vec4Math(v) );  v.splice( 0, 4 );
+        m.push( vec4Math(v) );  v.splice( 0, 4 );
+        m.push( vec4Math(v) );  v.splice( 0, 4 );
+        m.push( vec4Math(v) );
         break;
     }
 
@@ -388,12 +388,12 @@ function flatten( v )
 //
 
 var sizeof = {
-    'vec2' : new Float32Array( flatten(vec2()) ).byteLength,
-    'vec3' : new Float32Array( flatten(vec3()) ).byteLength,
-    'vec4' : new Float32Array( flatten(vec4()) ).byteLength,
-    'mat2' : new Float32Array( flatten(mat2()) ).byteLength,
-    'mat3' : new Float32Array( flatten(mat3()) ).byteLength,
-    'mat4' : new Float32Array( flatten(mat4()) ).byteLength
+    'vec2Math' : new Float32Array( flatten(vec2Math()) ).byteLength,
+    'vec3Math' : new Float32Array( flatten(vec3Math()) ).byteLength,
+    'vec4Math' : new Float32Array( flatten(vec4Math()) ).byteLength,
+    'mat2Math' : new Float32Array( flatten(mat2Math()) ).byteLength,
+    'mat3Math' : new Float32Array( flatten(mat3Math()) ).byteLength,
+    'mat4Math' : new Float32Array( flatten(mat4Math()) ).byteLength
 };
 
 //----------------------------------------------------------------------------
@@ -403,7 +403,7 @@ var sizeof = {
 
 function rotationXXMatrix( degrees )
 {
-	m = mat4();
+	m = mat4Math();
 	
 	m[1][1] = Math.cos( radians( degrees ) );
 	
@@ -418,7 +418,7 @@ function rotationXXMatrix( degrees )
 
 function rotationYYMatrix( degrees )
 {
-	m = mat4();
+	m = mat4Math();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -433,7 +433,7 @@ function rotationYYMatrix( degrees )
 
 function rotationZZMatrix( degrees )
 {
-	m = mat4();
+	m = mat4Math();
 	
 	m[0][0] = Math.cos( radians( degrees ) );
 	
@@ -448,7 +448,7 @@ function rotationZZMatrix( degrees )
 
 function scalingMatrix( sx, sy, sz )
 {
-	m = mat4();
+	m = mat4Math();
 	
 	m[0][0] = sx;
 	
@@ -461,7 +461,7 @@ function scalingMatrix( sx, sy, sz )
 
 function translationMatrix( tx, ty, tz )
 {
-	m = mat4();
+	m = mat4Math();
 	
 	m[0][3] = tx;
 	
@@ -487,7 +487,7 @@ function ortho( left, right, bottom, top, near, far )
     var h = top - bottom;
     var d = far - near;
 
-    var result = mat4();
+    var result = mat4Math();
     
     result[0][0] = 2.0 / w;
     result[1][1] = 2.0 / h;
@@ -506,7 +506,7 @@ function perspective( fovy, aspect, near, far )
     var f = 1.0 / Math.tan( radians(fovy) / 2 );
     var d = far - near;
 
-    var result = mat4();
+    var result = mat4Math();
     
     result[0][0] = f / aspect;
     result[1][1] = f;
