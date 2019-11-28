@@ -1,0 +1,2 @@
+6 0 3 45 0 0 0.2 0.2 0.2 LightBulbMesh BoxTexture
+0.2 0 0 0 0 0 0.2 0.2 0.2 TableMesh BoxTexture

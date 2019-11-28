@@ -312,7 +312,7 @@ function animate() {
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		var currentScene = scene_list[currentSceneIndex]
-		lightPosition.updatePosition()
+		//lightPosition.updatePosition()
 	}
 	lastTime = timeNow;
 }
