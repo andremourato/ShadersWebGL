@@ -50,6 +50,66 @@ app.get('/models_json', function (req, res) {
 	});
 })
 
+app.get('/models_obj', function (req, res) {
+  var body = {
+    models: []
+  }
+  var directoryPath = 'assets/modelsOBJ/'
+	fs.readdir(directoryPath, function (err, files) {
+		//handling error
+		if (err) {
+			return console.log('Unable to scan directory: ' + err);
+    } 
+
+		files.forEach(function (file) {
+      //   // Do whatever you want to do with the file
+      var model = {
+        name: null,
+        vertices: [],
+        normals: [],
+        texturecoords: [],
+        faces: [],
+      }
+      file = directoryPath + file
+      console.log('Loaded model from',file);
+      //listing all files using forEach
+      var lineReader = require('readline').createInterface({
+        input: require('fs').createReadStream(file)
+      });
+      var contents = fs.readFileSync(file, 'utf8').toString().split(/[\n\r]/).filter(x => x.length != 0)
+      contents.forEach( (line) => {
+        line = line.trim().replace(/\s\s+/g, ' ')
+        var line_split = line.split(' ')
+        if(line_split[0] == 'v'){
+          model.vertices.push(parseFloat(line_split[1]))
+          model.vertices.push(parseFloat(line_split[2]))
+          model.vertices.push(parseFloat(line_split[3]))
+        }
+        else if(line_split[0] == 'vn'){
+          // console.log(line_split)
+          model.normals.push(parseFloat(line_split[1]))
+          model.normals.push(parseFloat(line_split[2]))
+          model.normals.push(parseFloat(line_split[3]))
+        }else if(line_split[0] == 'vt'){
+          // console.log(line_split)
+          model.texturecoords.push(parseFloat(line_split[1]))
+          model.texturecoords.push(parseFloat(line_split[2]))
+          model.texturecoords.push(parseFloat(line_split[3]))
+        }else if(line_split[0] == 'f'){
+          for(var i = 1; i < line_split.length;i++){
+            model.faces.push(line_split[i].split('/').map(x => parseInt(x)))
+          }
+        } else if(line_split[0] == 'o'){
+          model.name = line_split[1]
+        }
+      });
+      body.models.push(model)
+    });
+    res.send(body)
+	});
+})
+
+
 
 app.get('/models', function (req, res) {
   var body = {
