@@ -116,11 +116,15 @@ function drawScene() {
 	gl.useProgram(shadowProgram);
 
 	//ver o dt
-	dt=16.6
-	lightDisplacementInputAngle += dt / 2337;
-	var displacement = Math.sin(lightDisplacementInputAngle) * 2.8;
+	// var dt=16.6
+	// lightDisplacementInputAngle += dt / 2337;
+	// var displacement = Math.sin(lightDisplacementInputAngle) * 2.8;
+	// // console.log(displacement)
 
-	lightPosition.world[12] = displacement;
+	// lightPosition.world[12] = displacement;
+
+	console.log(lightPosition)
+
 	for (var i = 0; i < shadowMapCameras.length; i++) {
 		mat4.getTranslation(shadowMapCameras[i].position, lightPosition.world);
 		shadowMapCameras[i].GetViewMatrix(shadowMapViewMatrices[i]);
@@ -148,7 +152,7 @@ function drawScene() {
 		// console.log(obj)
 
 		// Computing the Model-View Matrix
-
+		
 		gl.uniformMatrix4fv(
 			shadowProgram.uniforms.mWorld,
 			gl.FALSE,
@@ -435,40 +439,42 @@ async function runWebGL() {
 		85.0
 	);
 
+	console.log(lightPosition.world);
+
 	shadowMapCameras = [
-		// +X
+		// +X -3.28 0.5 0.77
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(1, 0, 0)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// -X
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(-1, 0, 0)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// +Y
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 1, 0)),
 			vec3.fromValues(0, 0, 1)
 		),
 		// -Y
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, -1, 0)),
 			vec3.fromValues(0, 0, -1)
 		),
 		// +Z
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 0, 1)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// -Z
 		new Camera(
-			vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz),
+			vec3.fromValues(0, 0, 2.8),
 			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 0, -1)),
 			vec3.fromValues(0, -1, 0)
 		),
@@ -600,8 +606,11 @@ function loadScenes() {
 					var normals = model.normals ? [...model.normals] : null
 					texture = getTexture(texture)
 					var newEntity = new Entity(tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, vertices, normals, texCoords, indices, texture)
+					
 					if (name == 'LightBulbMesh') {
 						lightPosition = newEntity
+						console.log('newent',newEntity);
+						
 					}
 					newScene.objects.push(newEntity)
 				})
