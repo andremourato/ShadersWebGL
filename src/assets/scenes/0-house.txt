@@ -1,5 +1,5 @@
-0 0 2 0 0 0 1 1 1 LightBulbMesh BoxTexture
+0 0 2.80 0 0 0 1 1 1 LightBulbMesh BoxTexture
 1.57 -0.7 0.49 0 0 0 1 1 1 TableMesh BoxTexture
 -3.28 0 0.77 0 1 0 1 1 1 SofaMesh BoxTexture
-2.07 -0.98 1.75 0 0 -1 0.8 0.8 0.8 Suzanne BoxTexture
+2.07 -0.98 1.75 0 0 -1 0.1 0.1 0.1 Suzanne BoxTexture
 0 0 0 0 0 0 1 1 1 WallsMesh BoxTexture
