@@ -11,12 +11,9 @@ var noShadowProgram = null;
 var shadowProgram = null;
 var shadowMapProgram = null;
 var currentSceneIndex = 0;
-var rotate = false
-var lightPosition = null
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
-
 var camera = new Camera(
 	vec3.fromValues(0, 0, 1.85),
 	vec3.fromValues(-0.3, -1, 1.85),
@@ -24,30 +21,10 @@ var camera = new Camera(
 );
 var cameraSpeed = 0.2
 var cameraSpeedAngle = 5
+var fieldOfView = 90
 
 var projMatrix = mat4.create();
 var viewMatrix = mat4.create();
-// SPEED
-const GLOBAL_SPEED = 0.03;
-var tx_speed = GLOBAL_SPEED;
-var ty_speed = GLOBAL_SPEED;
-var tz_speed = GLOBAL_SPEED;
-
-// Animation controls
-var rotationYY_ON = 0;
-var rotationYY_DIR = 1;
-var rotationYY_SPEED = 1;
-
-// DEFAULT POSITION VALUES
-var DEFAULT_TX = 0;
-var DEFAULT_TY = 0;
-var DEFAULT_TZ = 0;
-var DEFAULT_angleXX = 30;
-var DEFAULT_angleYY = 45;
-var DEFAULT_angleZZ = 0;
-var DEFAULT_SX = 0.2;
-var DEFAULT_SY = 0.2;
-var DEFAULT_SZ = 0.2;
 
 // MODELS
 var model_list = []
@@ -65,8 +42,6 @@ var shadowClipNearFar = null;
 var floatExtension = null;
 var floatLinearExtension = null;
 var lightDisplacementInputAngle = 0;
-
-
 
 //----------------------------------------------------------------------------
 // The WebGL code
@@ -105,6 +80,7 @@ function initBuffers(obj) {
 function drawScene() {
 	// Clearing with the background color
 	// Clear back buffer, set per-frame uniforms
+	// loadShaders()
 	gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 
@@ -113,20 +89,11 @@ function drawScene() {
 	gl.clearColor(0, 0, 0, 1);
 	gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
 
+	// Use shaders
 	gl.useProgram(shadowProgram);
 
-	//ver o dt
-	// var dt=16.6
-	// lightDisplacementInputAngle += dt / 2337;
-	// var displacement = Math.sin(lightDisplacementInputAngle) * 2.8;
-	// // console.log(displacement)
-
-	// lightPosition.world[12] = displacement;
-
-	console.log(lightPosition)
-
 	for (var i = 0; i < shadowMapCameras.length; i++) {
-		mat4.getTranslation(shadowMapCameras[i].position, lightPosition.world);
+		mat4.getTranslation(shadowMapCameras[i].position, getCurrentLightSource().world);
 		shadowMapCameras[i].GetViewMatrix(shadowMapViewMatrices[i]);
 	}
 
@@ -134,7 +101,7 @@ function drawScene() {
 
 	gl.uniformMatrix4fv(shadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
 	gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
-	gl.uniform3fv(shadowProgram.uniforms.pointLightPosition, vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz));
+	gl.uniform3fv(shadowProgram.uniforms.pointLightPosition, getCurrentLightPosition());
 	gl.uniform2fv(shadowProgram.uniforms.shadowClipNearFar, shadowClipNearFar);
 
 	if (floatExtension && floatLinearExtension) {
@@ -149,17 +116,14 @@ function drawScene() {
 	var currentScene = scene_list[currentSceneIndex]
 	for (var i = 0; i < currentScene.objects.length; i++) {
 		var obj = currentScene.objects[i]
-		// console.log(obj)
 
 		// Computing the Model-View Matrix
-		
 		gl.uniformMatrix4fv(
 			shadowProgram.uniforms.mWorld,
 			gl.FALSE,
 			obj.world
 		);
 
-		// console.log(vec4.fromValues(0.8, 0.8, 0.8, 1.0))
 		gl.uniform4fv(
 			shadowProgram.uniforms.meshColor,
 			//mudar para carregar textura
@@ -218,6 +182,15 @@ function tick() {
 }
 //----------------------------------------------------------------------------
 
+function getCurrentLightPosition(){
+	var currentLightSource = scene_list[currentSceneIndex].lightSource
+	return vec3.fromValues(currentLightSource.tx, currentLightSource.ty, currentLightSource.tz)
+}
+
+function getCurrentLightSource(){
+	return scene_list[currentSceneIndex].lightSource
+}
+
 function generateShadowMap(){
 	gl.useProgram(shadowMapProgram);
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
@@ -233,9 +206,10 @@ function generateShadowMap(){
 		shadowMapProgram.uniforms.shadowClipNearFar,
 		shadowClipNearFar
 	);
+
 	gl.uniform3fv(
 		shadowMapProgram.uniforms.pointLightPosition,
-		vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz)
+		getCurrentLightPosition()
 	);
 	gl.uniformMatrix4fv(
 		shadowMapProgram.uniforms.mProj,
@@ -273,7 +247,6 @@ function generateShadowMap(){
 		for (var j = 0; j < currentScene.objects.length; j++) {
 			// Per object uniforms
 			var obj = currentScene.objects[j]
-
 			gl.uniformMatrix4fv(
 				shadowMapProgram.uniforms.mWorld,
 				gl.FALSE,
@@ -302,6 +275,8 @@ function generateShadowMap(){
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
 }
 
+
+
 //----------------------------------------------------------------------------
 //
 //  Animation
@@ -315,8 +290,7 @@ function animate() {
 	var timeNow = new Date().getTime();
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
-		var currentScene = scene_list[currentSceneIndex]
-		//lightPosition.updatePosition()
+		//animate here
 	}
 	lastTime = timeNow;
 }
@@ -325,7 +299,6 @@ function setEventListeners() {
 	document.getElementById('scenes').addEventListener('change', (event) => {
 		var e = document.getElementById("scenes");
 		currentSceneIndex = e.options[e.selectedIndex].value;
-		loadCurrentScene()
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -338,22 +311,22 @@ function setEventListeners() {
 
 	//Control the source light
 	kd.UP.down(function () {
-		lightPosition.ty -= 0.3
+		getCurrentLightSource().ty -= 0.3
 	});
 
 	//Control the source light
 	kd.DOWN.down(function () {
-		lightPosition.ty += 0.3
+		getCurrentLightSource().ty += 0.3
 	});
 
 	//Control the source light
 	kd.RIGHT.down(function () {
-		lightPosition.tx -= 0.3
+		getCurrentLightSource().tx -= 0.3
 	});
 
 	//Control the source light
 	kd.LEFT.down(function () {
-		lightPosition.tx += 0.3
+		getCurrentLightSource().tx += 0.3
 	});
 
 
@@ -430,52 +403,52 @@ async function runWebGL() {
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
-
+	//Initializes all different models of objects
+	currentSceneIndex = 0
 	mat4.perspective(
 		projMatrix,
-		glMatrix.toRadian(90),
+		glMatrix.toRadian(fieldOfView),
 		gl.canvas.width / gl.canvas.height,
 		0.35,
 		85.0
 	);
-
-	console.log(lightPosition.world);
-
+	
+	var currentSceneLightPosition = getCurrentLightPosition()
 	shadowMapCameras = [
-		// +X -3.28 0.5 0.77
+		// +X 
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(1, 0, 0)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(1, 0, 0)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// -X
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(-1, 0, 0)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(-1, 0, 0)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// +Y
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 1, 0)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 1, 0)),
 			vec3.fromValues(0, 0, 1)
 		),
 		// -Y
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, -1, 0)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, -1, 0)),
 			vec3.fromValues(0, 0, -1)
 		),
 		// +Z
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 0, 1)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, 1)),
 			vec3.fromValues(0, -1, 0)
 		),
 		// -Z
 		new Camera(
-			vec3.fromValues(0, 0, 2.8),
-			vec3.add(vec3.create(), vec3.fromValues(lightPosition.tx, lightPosition.ty, lightPosition.tz), vec3.fromValues(0, 0, -1)),
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, -1)),
 			vec3.fromValues(0, -1, 0)
 		),
 	];
@@ -491,7 +464,7 @@ async function runWebGL() {
 	shadowClipNearFar = vec2.fromValues(0.05, 15.0);
 	mat4.perspective(
 		shadowMapProj,
-		glMatrix.toRadian(90),
+		glMatrix.toRadian(fieldOfView),
 		1.0,
 		shadowClipNearFar[0],
 		shadowClipNearFar[1]
@@ -500,8 +473,6 @@ async function runWebGL() {
 	// await loadModels()
 
 	setEventListeners();
-	//Initializes all different models of objects
-	currentSceneIndex = 0
 	tick();	// A timer controls the rendering / animation
 }
 
@@ -594,6 +565,7 @@ function loadScenes() {
 			var scenesHTML = document.getElementById('scenes');
 			sc_arr.scenes.forEach(scene => {
 				var newScene = {
+					lightSource:null,
 					name: scene.name,
 					objects: []
 				}
@@ -606,11 +578,8 @@ function loadScenes() {
 					var normals = model.normals ? [...model.normals] : null
 					texture = getTexture(texture)
 					var newEntity = new Entity(tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, vertices, normals, texCoords, indices, texture)
-					
 					if (name == 'LightBulbMesh') {
-						lightPosition = newEntity
-						console.log('newent',newEntity);
-						
+						newScene.lightSource = newEntity
 					}
 					newScene.objects.push(newEntity)
 				})
