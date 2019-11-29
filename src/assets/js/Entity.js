@@ -20,7 +20,6 @@ class Entity {
         this.vbo = gl.createBuffer()
         this.ibo = gl.createBuffer()
         this.tbo = gl.createBuffer()
-		this.updatePosition()
         
         // //Texture
         gl.bindBuffer(gl.ARRAY_BUFFER, this.tbo);
@@ -40,6 +39,7 @@ class Entity {
     }
 
     updatePosition(){
+        this.world = mat4.create()
         mat4.translate(this.world,this.world,vec4.fromValues(this.tx,this.ty,this.tz))
         //Rotate on the X Axis
         mat4.rotate(this.world,this.world,
