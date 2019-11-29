@@ -24,8 +24,14 @@ var cameraSpeed = 0.2
 var cameraSpeedAngle = 5
 var fieldOfView = 90
 
+//Shadows
 var projMatrix = mat4.create();
 var viewMatrix = mat4.create();
+
+//Textures
+var pUniform = null;
+var mvUniform = null;
+
 
 // MODELS
 var model_list = []
@@ -47,38 +53,10 @@ var lightDisplacementInputAngle = 0;
 //----------------------------------------------------------------------------
 // The WebGL code
 //----------------------------------------------------------------------------
-//  Rendering
-// Handling the Vertex and the Color Buffers
-function initBuffers(obj) {
-
-	// Associating to the vertex shader
-	gl.bindBuffer(gl.ARRAY_BUFFER, obj.vbo)
-	gl.vertexAttribPointer(
-		shaderProgram.positionAttribLocation,
-		3,
-		gl.FLOAT,
-		gl.FALSE,
-		3 * Float32Array.BYTES_PER_ELEMENT,
-		0);
-	gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
-
-	// Associating to the vertex shader
-	gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject)
-	gl.vertexAttribPointer(
-		shaderProgram.texCoordAttribLocation,
-		2,
-		gl.FLOAT,
-		gl.FALSE,
-		2 * Float32Array.BYTES_PER_ELEMENT,
-		0);
-	gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
-}
-
 //----------------------------------------------------------------------------
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
-
-function drawScene() {
+function drawSceneShadows() {
 	// Clearing with the background color
 	// Clear back buffer, set per-frame uniforms
 	// loadShaders()
@@ -97,7 +75,6 @@ function drawScene() {
 		mat4.getTranslation(shadowMapCameras[i].position, getCurrentLightSource().world);
 		shadowMapCameras[i].GetViewMatrix(shadowMapViewMatrices[i]);
 	}
-
 	
 	gl.uniformMatrix4fv(shadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
 	gl.uniform3fv(shadowProgram.uniforms.pointLightPosition, getCurrentLightPosition());
@@ -124,7 +101,6 @@ function drawScene() {
 
 		gl.uniform4fv(
 			shadowProgram.uniforms.meshColor,
-			//mudar para carregar textura
 			vec4.fromValues(0.8, 0.8, 0.8, 1.0)
 		);
 
@@ -143,17 +119,7 @@ function drawScene() {
 			0, 0
 		);
 		gl.enableVertexAttribArray(shadowProgram.attribs.vNorm);
-
-		// gl.vertexAttribPointer(
-		// 	shaderProgram.texCoordAttribLocation,
-		// 	2,
-		// 	gl.FLOAT,
-		// 	gl.FALSE,
-		// 	2 * Float32Array.BYTES_PER_ELEMENT,
-		// 	0* Float32Array.BYTES_PER_ELEMENT);
-		// gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
 		
-		// initBuffers(obj)
 		refreshTexture(obj)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -163,6 +129,40 @@ function drawScene() {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null);
 	}
 }
+
+function drawSceneTextures(){
+		// Clearing with the background color
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		// Passing the Projection Matrix to apply the current projection
+		pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+		// Passing the Model View Matrix to apply the current transformation
+		mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+		var pMatrix = perspective( fieldOfViewDegrees, aspect, zNear, zFar );
+		pMatrix = mult( translationMatrix( cameraX, cameraY, cameraZ ), pMatrix );
+		pMatrix = mult( rotationXXMatrix( cameraAngleX ), pMatrix );
+		pMatrix = mult( rotationYYMatrix( cameraAngleY ), pMatrix );
+		pMatrix = mult( rotationZZMatrix( cameraAngleZ ), pMatrix );
+		pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
+		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(proj)));
+		for(var i = 0; i < object_list.length; i++){
+			var obj = object_list[i]
+			console.log(obj)
+			// Computing the Model-View Matrix
+			var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
+								scalingMatrix( obj.sx, obj.sy, obj.sz ) );
+			mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
+			mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
+			mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
+			gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
+			refreshTexture(obj)
+			// Drawing the contents of the vertex buffer
+			//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
+				// console.log('got here',obj)
+				// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
+				gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+		}
+}
+
 
 function refreshTexture(obj) {
 	gl.bindTexture(gl.TEXTURE_2D, obj.texture.texture);
@@ -175,16 +175,15 @@ function refreshTexture(obj) {
 function tick() {
 	requestAnimFrame(tick);
 	generateCamera();
-	console.log(currentShader)
 	if(currentShader == 'Shadows'){
 		generateShadowMap();
-		drawScene();
+		drawSceneShadows();
 	}else if(currentShader == 'Normal'){
-
+		
 	}else if(currentShader == 'Fog'){
 
 	}else if(currentShader == 'Texture'){
-
+		drawSceneTextures()
 	}
 	animate();
 }
@@ -204,7 +203,106 @@ function generateCamera(){
 	gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
 }
 
+function drawSceneTextures(){
+	for(var i = 0; i < object_list.length; i++){
+		var obj = object_list[i]
+		// Coordinates
+		var objPosVertexBufferObject = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+		//Texture
+		var objTexCoordVertexBufferObject = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
+
+		//Indices
+		var objIndexBufferObject = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
+
+		// Associating to the vertex shader
+		gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
+		gl.vertexAttribPointer(
+			shaderProgram.positionAttribLocation, 
+			3, 
+			gl.FLOAT,
+			gl.FALSE,
+			3*Float32Array.BYTES_PER_ELEMENT,
+			0);
+		gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
+
+		// Associating to the vertex shader
+		gl.bindBuffer(gl.ARRAY_BUFFER,objTexCoordVertexBufferObject)
+		gl.vertexAttribPointer(
+			shaderProgram.texCoordAttribLocation, 
+			2, 
+			gl.FLOAT,
+			gl.FALSE,
+			2 * Float32Array.BYTES_PER_ELEMENT,
+			0);
+		gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
+	}
+}
+
 function generateShadowMap(){
+	var currentSceneLightPosition = getCurrentLightPosition()
+	shadowMapCameras = [
+		// +X 
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(1, 0, 0)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// -X
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(-1, 0, 0)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// +Y
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 1, 0)),
+			vec3.fromValues(0, 0, 1)
+		),
+		// -Y
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, -1, 0)),
+			vec3.fromValues(0, 0, -1)
+		),
+		// +Z
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, 1)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// -Z
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, -1)),
+			vec3.fromValues(0, -1, 0)
+		),
+	];
+	shadowMapViewMatrices = [
+		mat4.create(),
+		mat4.create(),
+		mat4.create(),
+		mat4.create(),
+		mat4.create(),
+		mat4.create()
+	];
+	shadowMapProj = mat4.create();
+	shadowClipNearFar = vec2.fromValues(0.05, 15.0);
+	mat4.perspective(
+		shadowMapProj,
+		glMatrix.toRadian(fieldOfView),
+		1.0,
+		shadowClipNearFar[0],
+		shadowClipNearFar[1]
+	);
+
 	gl.useProgram(shadowMapProgram);
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 	gl.bindFramebuffer(gl.FRAMEBUFFER, shadowMapFramebuffer);
@@ -316,7 +414,6 @@ function setEventListeners() {
 	document.getElementById('shaders').addEventListener('change', (event) => {
 		var e = document.getElementById("shaders");
 		currentShader = e.options[e.selectedIndex].value;
-		console.log(currentShader)
 		setupScene()
 	})
 
@@ -386,6 +483,17 @@ function setEventListeners() {
 		camera.moveUp(cameraSpeed)
 	});
 }
+
+function initCamera(){
+	mat4.perspective(
+		projMatrix,
+		glMatrix.toRadian(fieldOfView),
+		gl.canvas.width / gl.canvas.height,
+		0.35,
+		85.0
+	);
+}
+
 function resize() {
 	var targetHeight = window.innerWidth * 9 / 16;
 
@@ -423,70 +531,7 @@ async function runWebGL() {
 	await loadTextures()
 	await loadScenes()
 	//Initializes all different models of objects
-	mat4.perspective(
-		projMatrix,
-		glMatrix.toRadian(fieldOfView),
-		gl.canvas.width / gl.canvas.height,
-		0.35,
-		85.0
-	);
-	
-	var currentSceneLightPosition = getCurrentLightPosition()
-	shadowMapCameras = [
-		// +X 
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(1, 0, 0)),
-			vec3.fromValues(0, -1, 0)
-		),
-		// -X
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(-1, 0, 0)),
-			vec3.fromValues(0, -1, 0)
-		),
-		// +Y
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 1, 0)),
-			vec3.fromValues(0, 0, 1)
-		),
-		// -Y
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, -1, 0)),
-			vec3.fromValues(0, 0, -1)
-		),
-		// +Z
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, 1)),
-			vec3.fromValues(0, -1, 0)
-		),
-		// -Z
-		new Camera(
-			currentSceneLightPosition,
-			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, -1)),
-			vec3.fromValues(0, -1, 0)
-		),
-	];
-	shadowMapViewMatrices = [
-		mat4.create(),
-		mat4.create(),
-		mat4.create(),
-		mat4.create(),
-		mat4.create(),
-		mat4.create()
-	];
-	shadowMapProj = mat4.create();
-	shadowClipNearFar = vec2.fromValues(0.05, 15.0);
-	mat4.perspective(
-		shadowMapProj,
-		glMatrix.toRadian(fieldOfView),
-		1.0,
-		shadowClipNearFar[0],
-		shadowClipNearFar[1]
-	);
+	initCamera()
 
 	// await loadModels()
 
