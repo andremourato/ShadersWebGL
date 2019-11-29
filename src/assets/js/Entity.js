@@ -20,7 +20,7 @@ class Entity {
         this.vbo = gl.createBuffer()
         this.ibo = gl.createBuffer()
         this.tbo = gl.createBuffer()
-        this.updatePosition()
+        // this.updatePosition()
         // //Texture
         gl.bindBuffer(gl.ARRAY_BUFFER, this.tbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);

@@ -166,7 +166,6 @@ function drawSceneShadows() {
 function drawFog(time) {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
-	var fogColor = [0.8, 0.9, 1, 1];
 
     // Clear the canvas AND the depth buffer.
     gl.clearColor(...fogColor);
@@ -175,10 +174,7 @@ function drawFog(time) {
     gl.useProgram(fogProgram);
 
     // Turn on the position attribute
-	gl.enableVertexAttribArray(fogProgram.positionLocation);
-	
-	var positionBuffer = gl.createBuffer();
-	// Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
+    gl.enableVertexAttribArray(positionLocation);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.vertexAttribPointer(
@@ -187,41 +183,42 @@ function drawFog(time) {
     // Turn on the teccord attribute
     gl.enableVertexAttribArray(fogProgram.texcoordLocation);
 
-	var texcoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
     gl.vertexAttribPointer(
         fogProgram.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 
+	// Compute the projection matrix
+	
+	// fogProgram.positionLocation = gl.getAttribLocation(fogProgram, "a_position");
+	// fogProgram.texcoordLocation = gl.getAttribLocation(fogProgram, "a_texcoord");
+  
+	// fogProgram.projectionLocation = gl.getUniformLocation(fogProgram, "u_projection");
+	// fogProgram.worldViewLocation = gl.getUniformLocation(fogProgram, "u_worldView");
+	// fogProgram.textureLocation = gl.getUniformLocation(fogProgram, "u_texture");
+	// fogProgram.fogColorLocation = gl.getUniformLocation(fogProgram, "u_fogColor");
+	// fogProgram.fogDensityLocation = gl.getUniformLocation(fogProgram, "u_fogDensity");
+	
+    // var pMatrix =
+    //     mat4.perspective(degToRad(60), gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 2000);
+
+    // Compute the camera's matrix using look at.
+    // var cameraMatrix = m4.lookAt(cameraPosition, target, up);
+
     // // Make a view matrix from the camera matrix.
     // var viewMatrix = m4.inverse(cameraMatrix);
-	var settings = {
-	  fogDensity: 0.092,
-	  xOff: 1.1,
-	  zOff: 1.4,
-	};
 
     gl.uniformMatrix4fv(fogProgram.projectionLocation, false, projMatrix);
+
     // Tell the shader to use texture unit 0 for u_texture
-    gl.uniform1i(fogProgram.textureLocation, 0);
+    gl.uniform1i(textureLocation, 0);
 
     // set the fog color and near, far settings
-    gl.uniform4fv(fogProgram.fogColorLocation, fogColor);
-	gl.uniform1f(fogProgram.fogDensityLocation, settings.fogDensity);
+    gl.uniform4fv(fogColorLocation, fogColor);
+	gl.uniform1f(fogDensityLocation, settings.fogDensity);
 
-	for(let i = 0; i < object_list.length; i++){
-		// console.log(object_list)
-		obj = object_list[i];
-		//console.log(obj);
+	for(let i = 0; i<= currentScene.objects.length; i++){
+		obj = currentScene.objects[i] 
 		
-		gl.uniformMatrix4fv(fogProgram.worldViewLocation, false, viewMatrix);
-
-		gl.uniformMatrix4fv(
-			fogProgram.worldViewLocation,
-			gl.FALSE,
-			obj.world
-		);
-
-		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 
 	}
 	
@@ -244,7 +241,7 @@ function tick() {
 	}else if(currentShader == 'Normal'){
 		
 	}else if(currentShader == 'Fog'){
-		drawFog();
+
 	}else if(currentShader == 'Texture'){
 		drawSceneTextures()
 	}
@@ -312,7 +309,7 @@ function generateSceneTextures(obj){
 		0);
 	gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
 	gl.clearColor(0, 0, 0, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 }
 
 function drawSceneTextures(){
@@ -320,20 +317,24 @@ function drawSceneTextures(){
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.useProgram(shaderProgram)
 	gl.uniformMatrix4fv(shaderProgram.uniforms.pUniform, false, projMatrix);
+	// gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
 		obj.updatePosition()
-		gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
+		gl.uniformMatrix4fv(
+			shaderProgram.uniforms.mWorld,
+			gl.FALSE,
+			obj.world
+		);
 		// console.log(obj)
-		generateSceneTextures(obj)
 		refreshTexture(obj)
-		// Drawing the contents of the vertex buffer
-		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
-		// console.log('got here',obj)
-		// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
-		// console.log(obj.indices)
-		// gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+		generateSceneTextures(obj)
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.ibo);
 		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	}
 }
 
@@ -625,12 +626,12 @@ async function runWebGL() {
 	fogProgram = initShaders(gl, 'fog')
 	loadShaders();
 
+	//Initializes all different models of objects
+	initCamera()
 	// await loadModelsObj()
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
-	//Initializes all different models of objects
-	initCamera()
 	// await loadModels()
 
 	setEventListeners();
