@@ -12,7 +12,7 @@ var shadowProgram = null;
 var shadowMapProgram = null;
 var fogProgram = null;
 var lightSource = null
-var currentShader = 'Shadows';
+var currentShader = 'Texture';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -95,7 +95,6 @@ function drawSceneShadows() {
 	];
 	// Clearing with the background color
 	// Clear back buffer, set per-frame uniforms
-	// loadShaders()
 	gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 
@@ -244,7 +243,6 @@ function tick() {
 	}else if(currentShader == 'Fog'){
 
 	}else if(currentShader == 'Texture'){
-		generateSceneTextures()
 		drawSceneTextures()
 	}
 	animate();
@@ -271,74 +269,67 @@ function generateCamera(){
 }
 
 
-function generateSceneTextures(){
+function generateSceneTextures(obj){
 	gl.useProgram(shaderProgram)
-	for(var i = 0; i < object_list.length; i++){
-		var obj = object_list[i]
-		// Coordinates
-		var objPosVertexBufferObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+	// Coordinates
+	// console.log(obj)
+	var objPosVertexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
 
-		//Texture
-		var objTexCoordVertexBufferObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
+	//Texture
+	var objTexCoordVertexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
 
-		//Indices
-		var objIndexBufferObject = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
+	//Indices
+	var objIndexBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, objIndexBufferObject);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 
-		// Associating to the vertex shader
-		gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
-		gl.vertexAttribPointer(
-			shaderProgram.positionAttribLocation, 
-			3, 
-			gl.FLOAT,
-			gl.FALSE,
-			3*Float32Array.BYTES_PER_ELEMENT,
-			0);
-		gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
+	// Associating to the vertex shader
+	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
+	gl.vertexAttribPointer(
+		shaderProgram.positionAttribLocation, 
+		3, 
+		gl.FLOAT,
+		gl.FALSE,
+		3*Float32Array.BYTES_PER_ELEMENT,
+		0);
+	gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
 
-		// Associating to the vertex shader
-		gl.bindBuffer(gl.ARRAY_BUFFER,objTexCoordVertexBufferObject)
-		gl.vertexAttribPointer(
-			shaderProgram.texCoordAttribLocation, 
-			2, 
-			gl.FLOAT,
-			gl.FALSE,
-			2 * Float32Array.BYTES_PER_ELEMENT,
-			0);
-		gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
-	}
+	// Associating to the vertex shader
+	gl.bindBuffer(gl.ARRAY_BUFFER,objTexCoordVertexBufferObject)
+	gl.vertexAttribPointer(
+		shaderProgram.texCoordAttribLocation, 
+		2, 
+		gl.FLOAT,
+		gl.FALSE,
+		2 * Float32Array.BYTES_PER_ELEMENT,
+		0);
+	gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
+	gl.clearColor(0, 0, 0, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 }
 
 function drawSceneTextures(){
 	// Clearing with the background color
-	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.useProgram(shaderProgram)
-	// var pMatrix = perspective( fieldOfView, 16/9, 0, 2000 );
-	// console.log(projMatrix)
-	// console.log('pmatrix',pMatrix)
 	gl.uniformMatrix4fv(shaderProgram.uniforms.pUniform, false, projMatrix);
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
-		console.log(obj)
-		// Computing the Model-View Matrix
-		// var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
-		// 					scalingMatrix( obj.sx, obj.sy, obj.sz ) );
-		// mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
-		// mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
-		// mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
 		obj.updatePosition()
 		gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
+		// console.log(obj)
+		generateSceneTextures(obj)
 		refreshTexture(obj)
 		// Drawing the contents of the vertex buffer
 		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
 		// console.log('got here',obj)
 		// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
 		// console.log(obj.indices)
+		// gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 	}
 }
@@ -645,13 +636,17 @@ async function runWebGL() {
 
 function loadShaders() {
 	var shadersHTML = document.getElementById('shaders');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Shadows');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Normal');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Fog');
-	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
+
+	shaderProgram.positionAttribLocation = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+	shaderProgram.texCoordAttribLocation = gl.getAttribLocation(shaderProgram, "vertTexCoord");
 	shaderProgram.uniforms = {
 		pUniform: gl.getUniformLocation(shaderProgram, "uPMatrix"),
 		mvUniform: gl.getUniformLocation(shaderProgram, "uMVMatrix"),
+		mWorld: gl.getUniformLocation(shaderProgram, "mWorld"),
 	}
 
 	noShadowProgram.positionAttribLocation = gl.getAttribLocation(noShadowProgram, "vPos");
