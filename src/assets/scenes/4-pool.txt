@@ -1,4 +1,0 @@
-2.08 -0.99 -1.77 0 0 0 0.2 0.2 0.2 Suzanne MonkeyTexture
-0.4 0 -1.7 0 0 0 0.2 0.2 0.2 Cube Crate
--0.2 0 -1.7 0 0 0 0.2 0.2 0.2 SofaMesh Blue1
-0.4 0 -1.7 0 0 0 0.2 0.2 0.2 TableMesh Pink
