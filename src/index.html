@@ -211,6 +211,52 @@ Passing the Model-View Matrix and the Projection Matrix.
 	}
 </script>
 
+<script  id="fog-vs" type="x-shader/x-vertex">
+	attribute vec4 a_position;
+	attribute vec2 a_texcoord;
+	
+	uniform mat4 u_worldView;
+	uniform mat4 u_projection;
+	
+	varying vec2 v_texcoord;
+	varying vec3 v_position;
+	
+	void main() {
+	  // Multiply the position by the matrix.
+	  gl_Position = u_projection * u_worldView * a_position;
+	
+	  // Pass the texcoord to the fragment shader.
+	  v_texcoord = a_texcoord;
+	
+	  // Pass the view position to the fragment shader
+	  v_position = (u_worldView * a_position).xyz;
+	}
+</script>
+
+<script  id="fog-fs" type="x-shader/x-fragment">
+	precision mediump float;
+
+	// Passed in from the vertex shader.
+	varying vec2 v_texcoord;
+	varying vec3 v_position;
+
+	// The texture.
+	uniform sampler2D u_texture;
+	uniform vec4 u_fogColor;
+	uniform float u_fogDensity;
+
+	void main() {
+		vec4 color = texture2D(u_texture, v_texcoord);
+
+		#define LOG2 1.442695
+
+		float fogDistance = length(v_position);
+		float fogAmount = 1. - exp2(-u_fogDensity * u_fogDensity * fogDistance * fogDistance * LOG2);
+		fogAmount = clamp(fogAmount, 0., 1.);
+
+		gl_FragColor = mix(color, u_fogColor, fogAmount);  
+	}
+</script>
 
 <!-- The JS files -->
 
@@ -242,8 +288,14 @@ Passing the Model-View Matrix and the Projection Matrix.
 		}
 		.scene-input {
 			position: absolute;
-			right:20%
+			right:20%;
 		}
+		.fog-input {
+			position: absolute;
+			right:20%;
+			top:3%;
+		}
+
 </style>
     
 </head>
@@ -253,7 +305,11 @@ Passing the Model-View Matrix and the Projection Matrix.
 		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
 	</div>
 	<div>
-		<select class="scene-input" id="scenes">
+		<select class="scene-input" id="scenes"></select>
+		<div class="fog-input">
+			<p>Fog Density</p>
+			<input type="range" min="1" max="100" value="0" class="slider" id="fog-density">
+		</div>
 	</div>
 </body>
 
