@@ -10,7 +10,8 @@ var shaderProgram = null;
 var noShadowProgram = null;
 var shadowProgram = null;
 var shadowMapProgram = null;
-var currentSceneIndex = 0;
+var lightSource = null
+var currentShader = 'Shadows';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -28,7 +29,7 @@ var viewMatrix = mat4.create();
 
 // MODELS
 var model_list = []
-var scene_list = []
+var object_list = []
 var textures_available = []
 
 //SHADOW MAP
@@ -97,10 +98,8 @@ function drawScene() {
 		shadowMapCameras[i].GetViewMatrix(shadowMapViewMatrices[i]);
 	}
 
-	camera.GetViewMatrix(viewMatrix)
-
+	
 	gl.uniformMatrix4fv(shadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
-	gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
 	gl.uniform3fv(shadowProgram.uniforms.pointLightPosition, getCurrentLightPosition());
 	gl.uniform2fv(shadowProgram.uniforms.shadowClipNearFar, shadowClipNearFar);
 
@@ -113,9 +112,8 @@ function drawScene() {
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_CUBE_MAP, shadowMapCube);
 
-	var currentScene = scene_list[currentSceneIndex]
-	for (var i = 0; i < currentScene.objects.length; i++) {
-		var obj = currentScene.objects[i]
+	for (var i = 0; i < object_list.length; i++) {
+		var obj = object_list[i]
 
 		// Computing the Model-View Matrix
 		gl.uniformMatrix4fv(
@@ -176,19 +174,34 @@ function refreshTexture(obj) {
 //----------------------------------------------------------------------------
 function tick() {
 	requestAnimFrame(tick);
-	generateShadowMap();
-	drawScene();
+	generateCamera();
+	console.log(currentShader)
+	if(currentShader == 'Shadows'){
+		generateShadowMap();
+		drawScene();
+	}else if(currentShader == 'Normal'){
+
+	}else if(currentShader == 'Fog'){
+
+	}else if(currentShader == 'Texture'){
+
+	}
 	animate();
 }
 //----------------------------------------------------------------------------
 
 function getCurrentLightPosition(){
-	var currentLightSource = scene_list[currentSceneIndex].lightSource
-	return vec3.fromValues(currentLightSource.tx, currentLightSource.ty, currentLightSource.tz)
+	return vec3.fromValues(lightSource.tx, lightSource.ty, lightSource.tz)
 }
 
 function getCurrentLightSource(){
-	return scene_list[currentSceneIndex].lightSource
+	return lightSource
+}
+
+function generateCamera(){
+	gl.useProgram(shadowProgram)
+	camera.GetViewMatrix(viewMatrix)
+	gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
 }
 
 function generateShadowMap(){
@@ -243,10 +256,9 @@ function generateShadowMap(){
 		gl.clearColor(0, 0, 0, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		var currentScene = scene_list[currentSceneIndex]
-		for (var j = 0; j < currentScene.objects.length; j++) {
+		for (var j = 0; j < object_list.length; j++) {
 			// Per object uniforms
-			var obj = currentScene.objects[j]
+			var obj = object_list[j]
 			gl.uniformMatrix4fv(
 				shadowMapProgram.uniforms.mWorld,
 				gl.FALSE,
@@ -295,18 +307,25 @@ function animate() {
 	lastTime = timeNow;
 }
 
+function setupScene(){
+	for(var i = 0; i < object_list.length; i++){
+	}
+}
+
 function setEventListeners() {
-	document.getElementById('scenes').addEventListener('change', (event) => {
-		var e = document.getElementById("scenes");
-		currentSceneIndex = e.options[e.selectedIndex].value;
+	document.getElementById('shaders').addEventListener('change', (event) => {
+		var e = document.getElementById("shaders");
+		currentShader = e.options[e.selectedIndex].value;
+		console.log(currentShader)
+		setupScene()
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
 
 	window.addEventListener("keypress", (event) => {
 		var key = event.keyCode
-		if (key == 82 || key == 114)
-			rotate = !rotate
+		// if (key == 82 || key == 114)
+		// 	rotate = !rotate
 	});
 
 	//Control the source light
@@ -404,7 +423,6 @@ async function runWebGL() {
 	await loadTextures()
 	await loadScenes()
 	//Initializes all different models of objects
-	currentSceneIndex = 0
 	mat4.perspective(
 		projMatrix,
 		glMatrix.toRadian(fieldOfView),
@@ -477,6 +495,11 @@ async function runWebGL() {
 }
 
 function loadShaders() {
+	var shadersHTML = document.getElementById('shaders');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Shadows');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Normal');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Fog');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
 	noShadowProgram.positionAttribLocation = gl.getAttribLocation(noShadowProgram, "vPos");
 	noShadowProgram.texCoordAttribLocation = gl.getAttribLocation(noShadowProgram, "vertTexCoord");
 
@@ -521,8 +544,8 @@ function loadShaders() {
 	shadowMapProgram.attribs = {
 		vPos: gl.getAttribLocation(shadowMapProgram, 'vPos'),
 	};
-
-	loadShadowTexturesAndFrameBuffers();
+	if(currentShader == 'Shadows')
+		loadShadowTexturesAndFrameBuffers();
 }
 
 //----------------------------------------------------------------------------
@@ -561,11 +584,8 @@ function initWebGL(canvas) {
 function loadScenes() {
 	return new Promise(function (resolve, reject) {
 		fetchScenes().then((sc_arr) => {
-			var i = 0
-			var scenesHTML = document.getElementById('scenes');
 			sc_arr.scenes.forEach(scene => {
 				var newScene = {
-					lightSource:null,
 					name: scene.name,
 					objects: []
 				}
@@ -579,15 +599,12 @@ function loadScenes() {
 					texture = getTexture(texture)
 					var newEntity = new Entity(tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, vertices, normals, texCoords, indices, texture)
 					if (name == 'LightBulbMesh') {
-						newScene.lightSource = newEntity
+						lightSource = newEntity
 					}
-					newScene.objects.push(newEntity)
+					object_list.push(newEntity)
+					resolve()
 				})
-				scenesHTML.options[scenesHTML.options.length] = new Option('Scene ' + i, i);
-				i += 1
-				scene_list.push(newScene)
 			})
-			resolve()
 		})
 	})
 }

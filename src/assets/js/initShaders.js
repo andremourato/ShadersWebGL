@@ -63,8 +63,6 @@ function initShaders( gl,shaderName ) {
 		alert("Could not initialise shaders");
 	}
 
-	// gl.useProgram(shaderProgram);
-
 	return shaderProgram;
 }
 
