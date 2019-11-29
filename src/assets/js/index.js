@@ -29,11 +29,6 @@ var fieldOfView = 90
 var projMatrix = mat4.create();
 var viewMatrix = mat4.create();
 
-//Textures
-var pUniform = null;
-var mvUniform = null;
-
-
 // MODELS
 var model_list = []
 var object_list = []
@@ -58,6 +53,46 @@ var lightDisplacementInputAngle = 0;
 //  Drawing the 3D scene
 //----------------------------------------------------------------------------
 function drawSceneShadows() {
+	var currentSceneLightPosition = getCurrentLightPosition()
+	getCurrentLightSource().updatePosition()
+	shadowMapCameras = [
+		// +X 
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(1, 0, 0)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// -X
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(-1, 0, 0)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// +Y
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 1, 0)),
+			vec3.fromValues(0, 0, 1)
+		),
+		// -Y
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, -1, 0)),
+			vec3.fromValues(0, 0, -1)
+		),
+		// +Z
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, 1)),
+			vec3.fromValues(0, -1, 0)
+		),
+		// -Z
+		new Camera(
+			currentSceneLightPosition,
+			vec3.add(vec3.create(), currentSceneLightPosition, vec3.fromValues(0, 0, -1)),
+			vec3.fromValues(0, -1, 0)
+		),
+	];
 	// Clearing with the background color
 	// Clear back buffer, set per-frame uniforms
 	// loadShaders()
@@ -92,7 +127,7 @@ function drawSceneShadows() {
 
 	for (var i = 0; i < object_list.length; i++) {
 		var obj = object_list[i]
-
+		obj.updatePosition()
 		// Computing the Model-View Matrix
 		gl.uniformMatrix4fv(
 			shadowProgram.uniforms.mWorld,
@@ -120,8 +155,6 @@ function drawSceneShadows() {
 			0, 0
 		);
 		gl.enableVertexAttribArray(shadowProgram.attribs.vNorm);
-		
-		refreshTexture(obj)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -130,40 +163,6 @@ function drawSceneShadows() {
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null);
 	}
 }
-
-function drawSceneTextures(){
-		// Clearing with the background color
-		gl.clear(gl.COLOR_BUFFER_BIT);
-		// Passing the Projection Matrix to apply the current projection
-		pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-		// Passing the Model View Matrix to apply the current transformation
-		mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-		var pMatrix = perspective( fieldOfViewDegrees, aspect, zNear, zFar );
-		pMatrix = mult( translationMatrix( cameraX, cameraY, cameraZ ), pMatrix );
-		pMatrix = mult( rotationXXMatrix( cameraAngleX ), pMatrix );
-		pMatrix = mult( rotationYYMatrix( cameraAngleY ), pMatrix );
-		pMatrix = mult( rotationZZMatrix( cameraAngleZ ), pMatrix );
-		pMatrix = mult( scalingMatrix(cameraScaleX,cameraScaleY,cameraScaleZ),pMatrix)
-		gl.uniformMatrix4fv(pUniform, false, new Float32Array(flatten(proj)));
-		for(var i = 0; i < object_list.length; i++){
-			var obj = object_list[i]
-			console.log(obj)
-			// Computing the Model-View Matrix
-			var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
-								scalingMatrix( obj.sx, obj.sy, obj.sz ) );
-			mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
-			mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
-			mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
-			gl.uniformMatrix4fv(mvUniform, false, new Float32Array(flatten(mvMatrix)));
-			refreshTexture(obj)
-			// Drawing the contents of the vertex buffer
-			//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
-				// console.log('got here',obj)
-				// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
-				gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
-		}
-}
-
 
 function drawFog(time) {
     gl.enable(gl.CULL_FACE);
@@ -245,6 +244,7 @@ function tick() {
 	}else if(currentShader == 'Fog'){
 
 	}else if(currentShader == 'Texture'){
+		generateSceneTextures()
 		drawSceneTextures()
 	}
 	animate();
@@ -252,7 +252,7 @@ function tick() {
 //----------------------------------------------------------------------------
 
 function getCurrentLightPosition(){
-	return vec3.fromValues(lightSource.tx, lightSource.ty, lightSource.tz)
+	return vec3.fromValues(lightSource.tx, lightSource.ty, lightSource.tz-0.5)
 }
 
 function getCurrentLightSource(){
@@ -260,12 +260,19 @@ function getCurrentLightSource(){
 }
 
 function generateCamera(){
-	gl.useProgram(shadowProgram)
 	camera.GetViewMatrix(viewMatrix)
-	gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
+	if(currentShader == 'Shadows'){
+		gl.useProgram(shadowProgram)
+		gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
+	}else if(currentShader == 'Texture'){
+		gl.useProgram(shaderProgram)
+		gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, gl.FALSE, viewMatrix);
+	}
 }
 
-function drawSceneTextures(){
+
+function generateSceneTextures(){
+	gl.useProgram(shaderProgram)
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
 		// Coordinates
@@ -306,6 +313,36 @@ function drawSceneTextures(){
 		gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
 	}
 }
+
+function drawSceneTextures(){
+	// Clearing with the background color
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.useProgram(shaderProgram)
+	// var pMatrix = perspective( fieldOfView, 16/9, 0, 2000 );
+	// console.log(projMatrix)
+	// console.log('pmatrix',pMatrix)
+	gl.uniformMatrix4fv(shaderProgram.uniforms.pUniform, false, projMatrix);
+	for(var i = 0; i < object_list.length; i++){
+		var obj = object_list[i]
+		console.log(obj)
+		// Computing the Model-View Matrix
+		// var mvMatrix = mult( rotationZZMatrix( obj.angleZZ ), 
+		// 					scalingMatrix( obj.sx, obj.sy, obj.sz ) );
+		// mvMatrix = mult( rotationYYMatrix( obj.angleYY ), mvMatrix );
+		// mvMatrix = mult( rotationXXMatrix( obj.angleXX ), mvMatrix );
+		// mvMatrix = mult( translationMatrix( obj.tx, obj.ty, obj.tz ), mvMatrix );
+		obj.updatePosition()
+		gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
+		refreshTexture(obj)
+		// Drawing the contents of the vertex buffer
+		//gl.drawElements(gl.TRIANGLES, 0, object.objPosVertexBufferObject.numItems, 0);
+		// console.log('got here',obj)
+		// gl.drawArrays(gl.TRIANGLES, 0, obj.vertices.length);
+		// console.log(obj.indices)
+		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+	}
+}
+
 
 function generateShadowMap(){
 	var currentSceneLightPosition = getCurrentLightPosition()
@@ -482,7 +519,7 @@ function setEventListeners() {
 	document.getElementById('fog-density').addEventListener('change', (event) => {
 		var e = document.getElementById("fog-density");
 		currentFog = e.value;
-		console.log(currentFog)
+		// console.log(currentFog)
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -512,7 +549,6 @@ function setEventListeners() {
 	kd.LEFT.down(function () {
 		getCurrentLightSource().tx += 0.3
 	});
-
 
 	//Guide the camera
 	kd.W.down(function () {
@@ -613,9 +649,13 @@ function loadShaders() {
 	shadersHTML.options[shadersHTML.options.length] = new Option('Normal');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Fog');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
+	shaderProgram.uniforms = {
+		pUniform: gl.getUniformLocation(shaderProgram, "uPMatrix"),
+		mvUniform: gl.getUniformLocation(shaderProgram, "uMVMatrix"),
+	}
+
 	noShadowProgram.positionAttribLocation = gl.getAttribLocation(noShadowProgram, "vPos");
 	noShadowProgram.texCoordAttribLocation = gl.getAttribLocation(noShadowProgram, "vertTexCoord");
-
 	noShadowProgram.uniforms = {
 		mProj: gl.getUniformLocation(noShadowProgram, 'mProj'),
 		mView: gl.getUniformLocation(noShadowProgram, 'mView'),
@@ -737,7 +777,7 @@ function fetchScenes() {
 		fetch('http://localhost:8000/scenes')
 			.then(async function (response) {
 				// handle success
-				console.log('Loaded all scenes!')
+				console.log('Loaded all scene objects!')
 				resolve(await response.json())
 			})
 			.catch(function (error) {
