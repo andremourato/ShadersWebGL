@@ -102,6 +102,10 @@ Passing the Model-View Matrix and the Projection Matrix.
 	uniform vec3 pointLightPosition;
 	uniform vec4 meshColor;
 
+
+	varying vec2 fragTexCoord;
+	uniform sampler2D sampler;
+
 	varying vec3 fPos;
 	varying vec3 fNorm;
 
@@ -111,7 +115,8 @@ Passing the Model-View Matrix and the Projection Matrix.
 
 		float lightIntensity = 0.6 + 0.4 * max(dot(fNorm, toLightNormal), 0.0);
 
-		gl_FragColor = vec4(meshColor.rgb * lightIntensity, meshColor.a);
+		//gl_FragColor = vec4(meshColor.rgb * lightIntensity, meshColor.a);
+		gl_FragColor = texture2D(sampler, fragTexCoord);
 }
 </script>
 
