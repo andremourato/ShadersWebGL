@@ -12,7 +12,7 @@ var shadowProgram = null;
 var shadowMapProgram = null;
 var fogProgram = null;
 var lightSource = null
-var currentShader = 'Texture';
+var currentShader = 'Shadows';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -125,6 +125,7 @@ function drawSceneShadows() {
 
 	for (var i = 0; i < object_list.length; i++) {
 		var obj = object_list[i]
+		console.log(obj)
 		obj.updatePosition()
 		// Computing the Model-View Matrix
 		gl.uniformMatrix4fv(
@@ -262,14 +263,14 @@ function generateCamera(){
 		gl.useProgram(shadowProgram)
 		gl.uniformMatrix4fv(shadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
 	}else if(currentShader == 'Texture'){
-		gl.useProgram(shaderProgram)
-		gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, gl.FALSE, viewMatrix);
+		gl.useProgram(noShadowProgram)
+		gl.uniformMatrix4fv(noShadowProgram.uniforms.mView, gl.FALSE, viewMatrix);
 	}
 }
 
 
 function generateSceneTextures(obj){
-	gl.useProgram(shaderProgram)
+	gl.useProgram(noShadowProgram)
 	// Coordinates
 	// console.log(obj)
 	var objPosVertexBufferObject = gl.createBuffer();
@@ -289,24 +290,24 @@ function generateSceneTextures(obj){
 	// Associating to the vertex shader
 	gl.bindBuffer(gl.ARRAY_BUFFER,objPosVertexBufferObject)
 	gl.vertexAttribPointer(
-		shaderProgram.positionAttribLocation, 
+		noShadowProgram.positionAttribLocation, 
 		3, 
 		gl.FLOAT,
 		gl.FALSE,
 		3*Float32Array.BYTES_PER_ELEMENT,
 		0);
-	gl.enableVertexAttribArray(shaderProgram.positionAttribLocation);
+	gl.enableVertexAttribArray(noShadowProgram.positionAttribLocation);
 
 	// Associating to the vertex shader
 	gl.bindBuffer(gl.ARRAY_BUFFER,objTexCoordVertexBufferObject)
 	gl.vertexAttribPointer(
-		shaderProgram.texCoordAttribLocation, 
+		noShadowProgram.texCoordAttribLocation, 
 		2, 
 		gl.FLOAT,
 		gl.FALSE,
 		2 * Float32Array.BYTES_PER_ELEMENT,
 		0);
-	gl.enableVertexAttribArray(shaderProgram.texCoordAttribLocation);
+	gl.enableVertexAttribArray(noShadowProgram.texCoordAttribLocation);
 	gl.clearColor(0, 0, 0, 1);
 
 }
@@ -314,14 +315,14 @@ function generateSceneTextures(obj){
 function drawSceneTextures(){
 	// Clearing with the background color
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	gl.useProgram(shaderProgram)
-	gl.uniformMatrix4fv(shaderProgram.uniforms.pUniform, false, projMatrix);
+	gl.useProgram(noShadowProgram)
+	gl.uniformMatrix4fv(noShadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
 	// gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
 		obj.updatePosition()
 		gl.uniformMatrix4fv(
-			shaderProgram.uniforms.mWorld,
+			noShadowProgram.uniforms.mWorld,
 			gl.FALSE,
 			obj.world
 		);
