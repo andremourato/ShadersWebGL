@@ -54,7 +54,6 @@ var lightDisplacementInputAngle = 0;
 //----------------------------------------------------------------------------
 function drawSceneShadows() {
 	var currentSceneLightPosition = getCurrentLightPosition()
-	getCurrentLightSource().updatePosition()
 	shadowMapCameras = [
 		// +X 
 		new Camera(
@@ -326,7 +325,6 @@ function drawSceneTextures(){
 			gl.FALSE,
 			obj.world
 		);
-		// console.log(obj)
 		refreshTexture(obj)
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -547,22 +545,18 @@ function setEventListeners() {
 
 	//Guide the camera
 	kd.W.down(function () {
-		// console.log('w')
 		camera.moveForward(cameraSpeed)
 	});
 
 	kd.A.down(function () {
-		// console.log('a')
 		camera.moveRight(-cameraSpeed)
 	});
 
 	kd.S.down(function () {
-		// console.log('s')
 		camera.moveForward(-cameraSpeed)
 	});
 
 	kd.D.down(function () {
-		// console.log('d')
 		camera.moveRight(cameraSpeed)
 	});
 
