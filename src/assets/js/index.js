@@ -12,7 +12,7 @@ var shadowProgram = null;
 var shadowMapProgram = null;
 var fogProgram = null;
 var lightSource = null
-var currentShader = 'Shadows';
+var currentShader = 'Texture';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -45,6 +45,9 @@ var shadowClipNearFar = null;
 var floatExtension = null;
 var floatLinearExtension = null;
 var lightDisplacementInputAngle = 0;
+
+//FOG
+var currentFog=0;
 
 //----------------------------------------------------------------------------
 // The WebGL code
@@ -314,10 +317,15 @@ function generateSceneTextures(obj){
 
 function drawSceneTextures(){
 	// Clearing with the background color
+	var fogColor = [1,1,1,1];
+	var fogAmount = currentFog;
+
+	gl.clearColor(...fogColor)
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.useProgram(noShadowProgram)
 	gl.uniformMatrix4fv(noShadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
 	// gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
+
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
 		obj.updatePosition()
@@ -332,6 +340,11 @@ function drawSceneTextures(){
 
 		generateSceneTextures(obj)
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.ibo);
+
+		// set the fog color and amount
+		gl.uniform4fv(noShadowProgram.uniforms.fogColorLocation, fogColor);
+		gl.uniform1f(noShadowProgram.uniforms.fogAmountLocation, fogAmount);
+
 		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	}
@@ -518,7 +531,7 @@ function setEventListeners() {
 
 	document.getElementById('fog-density').addEventListener('change', (event) => {
 		var e = document.getElementById("fog-density");
-		currentFog = e.value;
+		currentFog = e.value/100;
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -623,7 +636,6 @@ async function runWebGL() {
 	noShadowProgram = initShaders(gl, 'noshadow');
 	shadowProgram = initShaders(gl, 'shadow');
 	shadowMapProgram = initShaders(gl, 'shadowmap');
-	fogProgram = initShaders(gl, 'fog')
 	loadShaders();
 
 	//Initializes all different models of objects
@@ -666,20 +678,13 @@ function loadShaders() {
 
 		pointLightPosition: gl.getUniformLocation(noShadowProgram, 'pointLightPosition'),
 		meshColor: gl.getUniformLocation(noShadowProgram, 'meshColor'),
+		fogColorLocation: gl.getUniformLocation(noShadowProgram, 'u_fogColor'),
+		fogAmountLocation: gl.getUniformLocation(noShadowProgram, 'u_fogAmount')
 	};
 	noShadowProgram.attribs = {
 		vPos: gl.getAttribLocation(noShadowProgram, 'vPos'),
 		vNorm: gl.getAttribLocation(noShadowProgram, 'vNorm'),
 	};
-
-	fogProgram.positionLocation = gl.getAttribLocation(fogProgram, "a_position");
-	fogProgram.texcoordLocation = gl.getAttribLocation(fogProgram, "a_texcoord");
-  
-	fogProgram.projectionLocation = gl.getUniformLocation(fogProgram, "u_projection");
-	fogProgram.worldViewLocation = gl.getUniformLocation(fogProgram, "u_worldView");
-	fogProgram.textureLocation = gl.getUniformLocation(fogProgram, "u_texture");
-	fogProgram.fogColorLocation = gl.getUniformLocation(fogProgram, "u_fogColor");
-	fogProgram.fogDensityLocation = gl.getUniformLocation(fogProgram, "u_fogDensity");
 
 	shadowProgram.uniforms = {
 		mProj: gl.getUniformLocation(shadowProgram, 'mProj'),
