@@ -166,67 +166,6 @@ function drawSceneShadows() {
 	}
 }
 
-function drawFog(time) {
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    // Clear the canvas AND the depth buffer.
-    gl.clearColor(...fogColor);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    gl.useProgram(fogProgram);
-
-    // Turn on the position attribute
-    gl.enableVertexAttribArray(positionLocation);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.vertexAttribPointer(
-        fogProgram.positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-    // Turn on the teccord attribute
-    gl.enableVertexAttribArray(fogProgram.texcoordLocation);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-    gl.vertexAttribPointer(
-        fogProgram.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-	// Compute the projection matrix
-	
-	// fogProgram.positionLocation = gl.getAttribLocation(fogProgram, "a_position");
-	// fogProgram.texcoordLocation = gl.getAttribLocation(fogProgram, "a_texcoord");
-  
-	// fogProgram.projectionLocation = gl.getUniformLocation(fogProgram, "u_projection");
-	// fogProgram.worldViewLocation = gl.getUniformLocation(fogProgram, "u_worldView");
-	// fogProgram.textureLocation = gl.getUniformLocation(fogProgram, "u_texture");
-	// fogProgram.fogColorLocation = gl.getUniformLocation(fogProgram, "u_fogColor");
-	// fogProgram.fogDensityLocation = gl.getUniformLocation(fogProgram, "u_fogDensity");
-	
-    // var pMatrix =
-    //     mat4.perspective(degToRad(60), gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 2000);
-
-    // Compute the camera's matrix using look at.
-    // var cameraMatrix = m4.lookAt(cameraPosition, target, up);
-
-    // // Make a view matrix from the camera matrix.
-    // var viewMatrix = m4.inverse(cameraMatrix);
-
-    gl.uniformMatrix4fv(fogProgram.projectionLocation, false, projMatrix);
-
-    // Tell the shader to use texture unit 0 for u_texture
-    gl.uniform1i(textureLocation, 0);
-
-    // set the fog color and near, far settings
-    gl.uniform4fv(fogColorLocation, fogColor);
-	gl.uniform1f(fogDensityLocation, settings.fogDensity);
-
-	for(let i = 0; i<= currentScene.objects.length; i++){
-		obj = currentScene.objects[i] 
-		
-
-	}
-	
-}
-
 function refreshTexture(obj) {
 	gl.bindTexture(gl.TEXTURE_2D, obj.texture.texture);
 	gl.activeTexture(gl.TEXTURE0);
@@ -320,7 +259,7 @@ function drawSceneTextures(){
 	var fogColor = [1,1,1,1];
 	var fogAmount = currentFog;
 
-	gl.clearColor(...fogColor)
+	// gl.clearColor(...fogColor)
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.useProgram(noShadowProgram)
 	gl.uniformMatrix4fv(noShadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
@@ -507,7 +446,6 @@ function animate() {
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		//animate here
-		console.log(camera.position)
 		dt =  40
 		lightDisplacementInputAngle += dt / 2337;
 		var xDisplacement = Math.sin(this.lightDisplacementInputAngle) * 2.8;
@@ -522,11 +460,49 @@ function setEventListeners() {
 		currentShader = e.options[e.selectedIndex].value;
 	})
 
-	document.getElementById('textures').addEventListener('change', (event) => {
-		var e = document.getElementById("textures");
+	document.getElementById('textures-cube').addEventListener('change', (event) => {
+		var e = document.getElementById("textures-cube");
 		selectedTextureName = e.options[e.selectedIndex].value;
 		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
-		object_list[1].texture = selectedTexture
+		if(selectedTexture){
+			object_list[1].texture = selectedTexture
+		}
+	})
+
+	document.getElementById('textures-table').addEventListener('change', (event) => {
+		var e = document.getElementById("textures-table");
+		selectedTextureName = e.options[e.selectedIndex].value;
+		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
+		if(selectedTexture){
+			object_list[2].texture = selectedTexture
+		}
+	})
+
+	document.getElementById('textures-sofa').addEventListener('change', (event) => {
+		var e = document.getElementById("textures-sofa");
+		selectedTextureName = e.options[e.selectedIndex].value;
+		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
+		if(selectedTexture){
+			object_list[3].texture = selectedTexture
+		}
+	})
+
+	document.getElementById('textures-monkey').addEventListener('change', (event) => {
+		var e = document.getElementById("textures-monkey");
+		selectedTextureName = e.options[e.selectedIndex].value;
+		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
+		if(selectedTexture){
+			object_list[4].texture = selectedTexture
+		}
+	})
+
+	document.getElementById('textures-wall').addEventListener('change', (event) => {
+		var e = document.getElementById("textures-wall");
+		selectedTextureName = e.options[e.selectedIndex].value;
+		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
+		if(selectedTexture){
+			object_list[5].texture = selectedTexture
+		}
 	})
 
 	document.getElementById('fog-density').addEventListener('change', (event) => {
@@ -644,9 +620,22 @@ async function runWebGL() {
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
-	var texturesHTML = document.getElementById('textures');
+	var texturesCubeHTML = document.getElementById('textures-cube');
+	var texturesTableHTML = document.getElementById('textures-table');
+	var texturesSofaHTML = document.getElementById('textures-sofa');
+	var texturesMonkeyHTML = document.getElementById('textures-monkey');
+	var texturesWallHTML = document.getElementById('textures-wall');
+	texturesCubeHTML.options[texturesCubeHTML.options.length] = new Option('Cube texture...');
+	texturesTableHTML.options[texturesTableHTML.options.length] = new Option('Table texture...');
+	texturesSofaHTML.options[texturesSofaHTML.options.length] = new Option('Sofa texture...');
+	texturesMonkeyHTML.options[texturesMonkeyHTML.options.length] = new Option('Monkey texture...');
+	texturesWallHTML.options[texturesWallHTML.options.length] = new Option('Wall texture...');
 	for(var i = 0; i < textures_available.length; i++){
-		texturesHTML.options[texturesHTML.options.length] = new Option(textures_available[i].name);
+		texturesCubeHTML.options[texturesCubeHTML.options.length] = new Option(textures_available[i].name);
+		texturesTableHTML.options[texturesTableHTML.options.length] = new Option(textures_available[i].name);
+		texturesSofaHTML.options[texturesSofaHTML.options.length] = new Option(textures_available[i].name);
+		texturesMonkeyHTML.options[texturesMonkeyHTML.options.length] = new Option(textures_available[i].name);
+		texturesWallHTML.options[texturesWallHTML.options.length] = new Option(textures_available[i].name);
 	}
 	// await loadModels()
 
