@@ -125,7 +125,7 @@ function drawSceneShadows() {
 
 	for (var i = 0; i < object_list.length; i++) {
 		var obj = object_list[i]
-		console.log(obj)
+		// console.log(obj)
 		obj.updatePosition()
 		// Computing the Model-View Matrix
 		gl.uniformMatrix4fv(
@@ -635,8 +635,8 @@ async function runWebGL() {
 
 function loadShaders() {
 	var shadersHTML = document.getElementById('shaders');
-	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Shadows');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Normal');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Fog');
 
