@@ -326,7 +326,7 @@ function drawSceneTextures(){
 			gl.FALSE,
 			obj.world
 		);
-		refreshTexture(obj)
+		refreshTexture(obj) 
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
