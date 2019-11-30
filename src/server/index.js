@@ -151,43 +151,6 @@ app.get('/models', function (req, res) {
 
 app.get('/scenes', function (req, res) {
   var directoryPath = 'assets/scenes/'
-  //Builds the maze
-  //TODO: COMPLETE THE MAZE ALGORITHM
-  // var wallSize = 0.2
-  // var maze = [[0,0,0,0],
-  //             [0,1,1,0],
-  //             [0,1,1,0],
-  //             [0,1,0,0]]
-  // var N = maze.length
-  // // var maze = [[0,0,0,0,1,0,0],
-  // //             [0,1,1,1,1,0,0],
-  // //             [0,1,0,0,1,1,1],
-  // //             [0,1,1,1,0,0,0],
-  // //             [0,1,0,1,1,0,0],
-  // //             [0,1,0,0,1,0,0],
-  // //             [0,1,0,0,0,0,0]]
-  // var payload = ''
-  // for(var y = 0; y < N; y++){
-  //   for(var x = 0; x < N; x++){
-  //     var px = 2* x * wallSize + wallSize
-  //     var py = -wallSize*2
-  //     var pz = 0
-  //     //0 = wall
-  //     //1 = path
-  //     var type = 'null'
-  //     if(maze[y][x] == 0){
-  //       type = ' Cube Blue1'
-  //     }else{ //Paints the floor
-  //       type += ' Cube Gray'
-  //     }
-  //     payload += px+' '+py+' '+pz+' '+' 0 0 0 '+wallSize+' '+wallSize+' '+wallSize+' '+type+'\n'
-  //   }
-  // }
-  // fs.writeFile(directoryPath+'1-maze.txt', payload, function(err) {
-  //   console.log('Maze written to file!')
-  // });
-
-
   //Reads the scenes from files
   var body = {
     scenes: []
@@ -211,7 +174,7 @@ app.get('/scenes', function (req, res) {
       }
       for(var i = 0; i < num_objects; i++){
         var obj = contents[i].trim().split(' ')
-        scene.objects.push({
+        var newObj = {
           tx: parseFloat(obj[0]),
           ty: parseFloat(obj[1]),
           tz: parseFloat(obj[2]),
@@ -223,7 +186,13 @@ app.get('/scenes', function (req, res) {
           sz: parseFloat(obj[8]),
           name: obj[9],
           texture: obj[10]
-        })
+        }
+        if(obj.length == 14){
+          newObj.R = parseFloat(obj[11])
+          newObj.G = parseFloat(obj[12])
+          newObj.B = parseFloat(obj[13])
+        }
+        scene.objects.push(newObj)
       }
       body.scenes.push(scene)
     });

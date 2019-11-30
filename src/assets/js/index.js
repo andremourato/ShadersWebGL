@@ -12,7 +12,7 @@ var shadowProgram = null;
 var shadowMapProgram = null;
 var fogProgram = null;
 var lightSource = null
-var currentShader = 'Texture';
+var currentShader = 'Shadows';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -136,10 +136,13 @@ function drawSceneShadows() {
 			gl.FALSE,
 			obj.world
 		);
-
+		var colors = [0.8,0.8,0.8]
+		if(obj.R || obj.R == 0 || obj.G == 0 || obj.B == 0){
+			colors = [obj.R/255,obj.G/255,obj.B/255]
+		}
 		gl.uniform4fv(
 			shadowProgram.uniforms.meshColor,
-			vec4.fromValues(0.8, 0.8, 0.8, 1.0)
+			vec4.fromValues(colors[0], colors[1], colors[2], 1.0)
 		);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, obj.vbo);
@@ -457,7 +460,7 @@ function animate() {
 function setEventListeners() {
 	document.getElementById('shaders').addEventListener('change', (event) => {
 		var e = document.getElementById("shaders");
-		currentShader = e.options[e.selectedIndex].value;
+		currentShader = e.options[e.selectedIndex].value.split(' ')[0];
 	})
 
 	document.getElementById('textures-cube').addEventListener('change', (event) => {
@@ -503,11 +506,6 @@ function setEventListeners() {
 		if(selectedTexture){
 			object_list[5].texture = selectedTexture
 		}
-	})
-
-	document.getElementById('fog-density').addEventListener('change', (event) => {
-		var e = document.getElementById("fog-density");
-		currentFog = e.value/100;
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -570,6 +568,11 @@ function setEventListeners() {
 	kd.SPACE.down(function () {
 		camera.moveUp(cameraSpeed)
 	});
+}
+
+function updateDensity(){
+	var e = document.getElementById("fog-density");
+	currentFog = e.value/100;
 }
 
 function initCamera(){
@@ -747,7 +750,7 @@ function loadScenes() {
 					objects: []
 				}
 				scene.objects.forEach((obj) => {
-					var { tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, name, texture } = obj
+					var { tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, name, texture, R, G, B } = obj
 					var model = getModel(name)
 					var vertices = [...model.vertices]
 					var texCoords = [...model.texCoords]
@@ -757,6 +760,13 @@ function loadScenes() {
 					var newEntity = new Entity(tx, ty, tz, angleXX, angleYY, angleZZ, sx, sy, sz, vertices, normals, texCoords, indices, texture)
 					if (name == 'LightBulbMesh') {
 						lightSource = newEntity
+					}
+					if(R || R == 0 || G == 0 || B == 0){
+						console.log('has color!')
+						newEntity.R = R
+						newEntity.G = G
+						newEntity.B = B
+						console.log(newEntity)
 					}
 					object_list.push(newEntity)
 					resolve()
