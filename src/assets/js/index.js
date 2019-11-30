@@ -646,9 +646,7 @@ async function runWebGL() {
 function loadShaders() {
 	var shadersHTML = document.getElementById('shaders');
 	shadersHTML.options[shadersHTML.options.length] = new Option('Shadows');
-	shadersHTML.options[shadersHTML.options.length] = new Option('Texture');
-	shadersHTML.options[shadersHTML.options.length] = new Option('Normal');
-	shadersHTML.options[shadersHTML.options.length] = new Option('Fog');
+	shadersHTML.options[shadersHTML.options.length] = new Option('Texture and Fog');
 
 	shaderProgram.positionAttribLocation = gl.getAttribLocation(shaderProgram, "aVertexPosition");
 	shaderProgram.texCoordAttribLocation = gl.getAttribLocation(shaderProgram, "vertTexCoord");
