@@ -295,10 +295,19 @@ Passing the Model-View Matrix and the Projection Matrix.
 			position: absolute;
 			right:20%;
 		}
+		.textures-input {
+			position: absolute;
+			right:30%;
+		}
+		.texture_text{
+			position: absolute;
+			right:40%;
+			top:-1%;
+		}
 		.fog-input {
 			position: absolute;
-			right:20%;
-			top:3%;
+			right:7%;
+			top:-1%;
 		}
 
 </style>
@@ -310,6 +319,8 @@ Passing the Model-View Matrix and the Projection Matrix.
 		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
 	</div>
 	<div>
+		<p class="texture_text">Select the texture of the cube</p>
+		<select class="textures-input" id="textures"></select>
 		<select class="shaders-input" id="shaders"></select>
 		<div class="fog-input">
 			<p>Fog Density</p>

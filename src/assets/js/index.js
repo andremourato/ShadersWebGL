@@ -17,7 +17,7 @@ var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
 var camera = new Camera(
-	vec3.fromValues(0, 0, 1.85),
+	vec3.fromValues(-0.79, 4.95, 1.85),
 	vec3.fromValues(-0.3, -1, 1.85),
 	vec3.fromValues(0, 0, 1)
 );
@@ -494,26 +494,31 @@ function animate() {
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		//animate here
+		console.log(camera.position)
+		dt =  40
+		lightDisplacementInputAngle += dt / 2337;
+		var xDisplacement = Math.sin(this.lightDisplacementInputAngle) * 2.8;
+		object_list[0].tx = xDisplacement;
 	}
 	lastTime = timeNow;
-}
-
-function setupScene(){
-	for(var i = 0; i < object_list.length; i++){
-	}
 }
 
 function setEventListeners() {
 	document.getElementById('shaders').addEventListener('change', (event) => {
 		var e = document.getElementById("shaders");
 		currentShader = e.options[e.selectedIndex].value;
-		setupScene()
+	})
+
+	document.getElementById('textures').addEventListener('change', (event) => {
+		var e = document.getElementById("textures");
+		selectedTextureName = e.options[e.selectedIndex].value;
+		var selectedTexture = textures_available.filter(x => x.name == selectedTextureName)[0]
+		object_list[1].texture = selectedTexture
 	})
 
 	document.getElementById('fog-density').addEventListener('change', (event) => {
 		var e = document.getElementById("fog-density");
 		currentFog = e.value;
-		// console.log(currentFog)
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -627,6 +632,10 @@ async function runWebGL() {
 	await loadModelsJson()
 	await loadTextures()
 	await loadScenes()
+	var texturesHTML = document.getElementById('textures');
+	for(var i = 0; i < textures_available.length; i++){
+		texturesHTML.options[texturesHTML.options.length] = new Option(textures_available[i].name);
+	}
 	// await loadModels()
 
 	setEventListeners();
