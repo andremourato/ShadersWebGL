@@ -461,6 +461,12 @@ function setEventListeners() {
 	document.getElementById('shaders').addEventListener('change', (event) => {
 		var e = document.getElementById("shaders");
 		currentShader = e.options[e.selectedIndex].value.split(' ')[0];
+		var texHTML = document.getElementById('texture_only')
+		if(currentShader == 'Shadows'){
+			texHTML.style.visibility = 'hidden'
+		}else{
+			texHTML.style.visibility = 'visible'
+		}
 	})
 
 	document.getElementById('textures-cube').addEventListener('change', (event) => {
@@ -633,6 +639,8 @@ async function runWebGL() {
 	texturesSofaHTML.options[texturesSofaHTML.options.length] = new Option('Sofa texture...');
 	texturesMonkeyHTML.options[texturesMonkeyHTML.options.length] = new Option('Monkey texture...');
 	texturesWallHTML.options[texturesWallHTML.options.length] = new Option('Wall texture...');
+	var texHTML = document.getElementById('texture_only')
+	texHTML.style.visibility = 'hidden'
 	for(var i = 0; i < textures_available.length; i++){
 		texturesCubeHTML.options[texturesCubeHTML.options.length] = new Option(textures_available[i].name);
 		texturesTableHTML.options[texturesTableHTML.options.length] = new Option(textures_available[i].name);
@@ -762,11 +770,9 @@ function loadScenes() {
 						lightSource = newEntity
 					}
 					if(R || R == 0 || G == 0 || B == 0){
-						console.log('has color!')
 						newEntity.R = R
 						newEntity.G = G
 						newEntity.B = B
-						console.log(newEntity)
 					}
 					object_list.push(newEntity)
 					resolve()

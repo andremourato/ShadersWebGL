@@ -277,12 +277,20 @@ Passing the Model-View Matrix and the Projection Matrix.
 		.texture_text{
 			position: absolute;
 			left:5%;
-			top:-1%;
+			top:1%;
 		}
 		.fog-input {
 			position: absolute;
 			right:7%;
 			top:-1%;
+		}
+		.shader_text{
+			position: absolute;
+			right:29%;
+			top:1%;
+		}
+		.text{
+			color: black;
 		}
 
 </style>
@@ -293,19 +301,20 @@ Passing the Model-View Matrix and the Projection Matrix.
 	<div id="containerDiv" style="text-align: center">
 		<canvas id="my-canvas" class="webgl-content" style="border:1px solid #000000;position:absolute;left:0;top:0"></canvas>
 	</div>
-	<div>
-		<p class="texture_text">Select the textures:</p>
+	<div id="texture_only">
+		<span style="background-color: #FFFFFF" class="text texture_text">Select the textures:</span>
 		<select class="textures-input-cube" id="textures-cube"></select>
 		<select class="textures-input-table" id="textures-table"></select>
 		<select class="textures-input-sofa" id="textures-sofa"></select>
 		<select class="textures-input-monkey" id="textures-monkey"></select>
 		<select class="textures-input-wall" id="textures-wall"></select>
-		<select class="shaders-input" id="shaders"></select>
 		<div class="fog-input">
-			<p>Fog Density</p>
+			<p class="text">Fog Density</p>
 			<input oninput="updateDensity(this.value)" type="range" min="1" max="100" value="0" class="slider" id="fog-density">
 		</div>
 	</div>
+	<span style="background-color: #FFFFFF" class="text shader_text">Select the shader:</span>
+	<select class="shaders-input" id="shaders"></select>
 </body>
 
 </html>
