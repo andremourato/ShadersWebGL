@@ -104,19 +104,29 @@ Passing the Model-View Matrix and the Projection Matrix.
 
 
 	varying vec2 fragTexCoord;
+	varying vec3 fPos;
+
 	uniform sampler2D sampler;
 
-	varying vec3 fPos;
 	varying vec3 fNorm;
+	uniform vec4 u_fogColor;
+	uniform float u_fogDensity;
 
 	void main()
 	{
+		vec4 color = texture2D(sampler, fragTexCoord);
 		vec3 toLightNormal = normalize(pointLightPosition - fPos);
 
 		float lightIntensity = 0.6 + 0.4 * max(dot(fNorm, toLightNormal), 0.0);
 
-		//gl_FragColor = vec4(meshColor.rgb * lightIntensity, meshColor.a);
-		gl_FragColor = texture2D(sampler, fragTexCoord);
+		#define LOG2 1.442695
+
+		float fogDistance = length(fPos);
+		float fogAmount = 1. - exp2(-u_fogDensity * u_fogDensity * fogDistance * fogDistance * LOG2);
+		fogAmount = clamp(fogAmount, 0., 1.);
+
+		gl_FragColor = mix(color, u_fogColor, fogAmount);  
+		
 }
 </script>
 
@@ -216,52 +226,6 @@ Passing the Model-View Matrix and the Projection Matrix.
 	}
 </script>
 
-<script  id="fog-vs" type="x-shader/x-vertex">
-	attribute vec4 a_position;
-	attribute vec2 a_texcoord;
-	
-	uniform mat4 u_worldView;
-	uniform mat4 u_projection;
-	
-	varying vec2 v_texcoord;
-	varying vec3 v_position;
-	
-	void main() {
-	  // Multiply the position by the matrix.
-	  gl_Position = u_projection * u_worldView * a_position;
-	
-	  // Pass the texcoord to the fragment shader.
-	  v_texcoord = a_texcoord;
-	
-	  // Pass the view position to the fragment shader
-	  v_position = (u_worldView * a_position).xyz;
-	}
-</script>
-
-<script  id="fog-fs" type="x-shader/x-fragment">
-	precision mediump float;
-
-	// Passed in from the vertex shader.
-	varying vec2 v_texcoord;
-	varying vec3 v_position;
-
-	// The texture.
-	uniform sampler2D u_texture;
-	uniform vec4 u_fogColor;
-	uniform float u_fogDensity;
-
-	void main() {
-		vec4 color = texture2D(u_texture, v_texcoord);
-
-		#define LOG2 1.442695
-
-		float fogDistance = length(v_position);
-		float fogAmount = 1. - exp2(-u_fogDensity * u_fogDensity * fogDistance * fogDistance * LOG2);
-		fogAmount = clamp(fogAmount, 0., 1.);
-
-		gl_FragColor = mix(color, u_fogColor, fogAmount);  
-	}
-</script>
 
 <!-- The JS files -->
 

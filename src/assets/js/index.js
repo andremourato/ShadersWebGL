@@ -12,7 +12,7 @@ var shadowProgram = null;
 var shadowMapProgram = null;
 var fogProgram = null;
 var lightSource = null
-var currentShader = 'Shadows';
+var currentShader = 'Texture';
 var textureSize = getParameterByName('texSize') || 512;
 
 //CAMERA parameters
@@ -46,7 +46,9 @@ var floatExtension = null;
 var floatLinearExtension = null;
 var lightDisplacementInputAngle = 0;
 
-//----------------------------------------------------------------------------
+//FOG
+var currentFog = 0.092;
+//----------------------------
 // The WebGL code
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -163,66 +165,6 @@ function drawSceneShadows() {
 	}
 }
 
-function drawFog(time) {
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    // Clear the canvas AND the depth buffer.
-    gl.clearColor(...fogColor);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    gl.useProgram(fogProgram);
-
-    // Turn on the position attribute
-    gl.enableVertexAttribArray(positionLocation);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.vertexAttribPointer(
-        fogProgram.positionLocation, 3, gl.FLOAT, false, 0, 0);
-
-    // Turn on the teccord attribute
-    gl.enableVertexAttribArray(fogProgram.texcoordLocation);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-    gl.vertexAttribPointer(
-        fogProgram.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-
-	// Compute the projection matrix
-	
-	// fogProgram.positionLocation = gl.getAttribLocation(fogProgram, "a_position");
-	// fogProgram.texcoordLocation = gl.getAttribLocation(fogProgram, "a_texcoord");
-  
-	// fogProgram.projectionLocation = gl.getUniformLocation(fogProgram, "u_projection");
-	// fogProgram.worldViewLocation = gl.getUniformLocation(fogProgram, "u_worldView");
-	// fogProgram.textureLocation = gl.getUniformLocation(fogProgram, "u_texture");
-	// fogProgram.fogColorLocation = gl.getUniformLocation(fogProgram, "u_fogColor");
-	// fogProgram.fogDensityLocation = gl.getUniformLocation(fogProgram, "u_fogDensity");
-	
-    // var pMatrix =
-    //     mat4.perspective(degToRad(60), gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 2000);
-
-    // Compute the camera's matrix using look at.
-    // var cameraMatrix = m4.lookAt(cameraPosition, target, up);
-
-    // // Make a view matrix from the camera matrix.
-    // var viewMatrix = m4.inverse(cameraMatrix);
-
-    gl.uniformMatrix4fv(fogProgram.projectionLocation, false, projMatrix);
-
-    // Tell the shader to use texture unit 0 for u_texture
-    gl.uniform1i(textureLocation, 0);
-
-    // set the fog color and near, far settings
-    gl.uniform4fv(fogColorLocation, fogColor);
-	gl.uniform1f(fogDensityLocation, settings.fogDensity);
-
-	for(let i = 0; i<= currentScene.objects.length; i++){
-		obj = currentScene.objects[i] 
-		
-
-	}
-	
-}
 
 function refreshTexture(obj) {
 	gl.bindTexture(gl.TEXTURE_2D, obj.texture.texture);
@@ -314,9 +256,34 @@ function generateSceneTextures(obj){
 
 function drawSceneTextures(){
 	// Clearing with the background color
+    gl.clearColor(0,0,0,1);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.useProgram(noShadowProgram)
 	gl.uniformMatrix4fv(noShadowProgram.uniforms.mProj, gl.FALSE, projMatrix);
+
+	// var objPosVertexBufferObject = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
+	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+	// //Texture
+	// var objTexCoordVertexBufferObject = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, objTexCoordVertexBufferObject);
+	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.texCoords), gl.STATIC_DRAW);
+
+
+    // Tell the shader to use texture unit 0 for u_texture
+    gl.uniform1i(noShadowProgram.uniforms.textureLocation, 0);
+
+	var fogColor = [0.8, 0.9, 1, 1];
+	var settings = {
+		fogDensity: currentFog
+	  };
+	console.log(currentFog);
+
+	gl.uniform4fv(noShadowProgram.fogColorLocation, fogColor);
+	gl.uniform1f(noShadowProgram.fogDensityLocation, settings.fogDensity);
+
+
 	// gl.uniformMatrix4fv(shaderProgram.uniforms.mvUniform, false, viewMatrix);
 	for(var i = 0; i < object_list.length; i++){
 		var obj = object_list[i]
@@ -326,15 +293,46 @@ function drawSceneTextures(){
 			gl.FALSE,
 			obj.world
 		);
-		refreshTexture(obj) 
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
+		
+		refreshTexture(obj) 
 		generateSceneTextures(obj)
+
+
+
+		// refreshTexture(obj);
+
+
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.ibo);
 		gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	}
+	////////////DRAWS THE FOG
+
+	// var objPosVertexBufferObject = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, objPosVertexBufferObject);
+	// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+
+	// var texture = gl.createTexture();
+	// gl.bindTexture(gl.TEXTURE_2D, texture);
+	// // Fill the texture with a 1x1 blue pixel.
+	// gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+	// 			  new Uint8Array([0, 0, 255, 255]));
+  
+	// gl.useProgram(fogProgram)
+	// // gl.clearColor(...fogColor);
+	// // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	// gl.enableVertexAttribArray(fogProgram.positionLocation);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, fogProgram.positionBuffer);
+	
+    // gl.vertexAttribPointer(
+    //     fogProgram.positionLocation, size, type, normalize, stride, offset);
+
+	// gl.enableVertexAttribArray(fogProgramtexcoordLocation);
+
 }
 
 
@@ -494,7 +492,6 @@ function animate() {
 	if (lastTime != 0) {
 		var elapsed = timeNow - lastTime;
 		//animate here
-		console.log(camera.position)
 		dt =  40
 		lightDisplacementInputAngle += dt / 2337;
 		var xDisplacement = Math.sin(this.lightDisplacementInputAngle) * 2.8;
@@ -518,7 +515,7 @@ function setEventListeners() {
 
 	document.getElementById('fog-density').addEventListener('change', (event) => {
 		var e = document.getElementById("fog-density");
-		currentFog = e.value;
+		currentFog = e.value/100;
 	})
 
 	window.addEventListener('resize', function () { resize() }, false);
@@ -623,7 +620,6 @@ async function runWebGL() {
 	noShadowProgram = initShaders(gl, 'noshadow');
 	shadowProgram = initShaders(gl, 'shadow');
 	shadowMapProgram = initShaders(gl, 'shadowmap');
-	fogProgram = initShaders(gl, 'fog')
 	loadShaders();
 
 	//Initializes all different models of objects
@@ -663,23 +659,17 @@ function loadShaders() {
 		mProj: gl.getUniformLocation(noShadowProgram, 'mProj'),
 		mView: gl.getUniformLocation(noShadowProgram, 'mView'),
 		mWorld: gl.getUniformLocation(noShadowProgram, 'mWorld'),
+		textureLocation: gl.getUniformLocation(noShadowProgram, 'sampler'),
 
 		pointLightPosition: gl.getUniformLocation(noShadowProgram, 'pointLightPosition'),
 		meshColor: gl.getUniformLocation(noShadowProgram, 'meshColor'),
+		fogColorLocation : gl.getUniformLocation(noShadowProgram, "u_fogColor"),
+		fogDensityLocation : gl.getUniformLocation(noShadowProgram, "u_fogDensity")
 	};
 	noShadowProgram.attribs = {
 		vPos: gl.getAttribLocation(noShadowProgram, 'vPos'),
 		vNorm: gl.getAttribLocation(noShadowProgram, 'vNorm'),
 	};
-
-	fogProgram.positionLocation = gl.getAttribLocation(fogProgram, "a_position");
-	fogProgram.texcoordLocation = gl.getAttribLocation(fogProgram, "a_texcoord");
-  
-	fogProgram.projectionLocation = gl.getUniformLocation(fogProgram, "u_projection");
-	fogProgram.worldViewLocation = gl.getUniformLocation(fogProgram, "u_worldView");
-	fogProgram.textureLocation = gl.getUniformLocation(fogProgram, "u_texture");
-	fogProgram.fogColorLocation = gl.getUniformLocation(fogProgram, "u_fogColor");
-	fogProgram.fogDensityLocation = gl.getUniformLocation(fogProgram, "u_fogDensity");
 
 	shadowProgram.uniforms = {
 		mProj: gl.getUniformLocation(shadowProgram, 'mProj'),
