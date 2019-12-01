@@ -13,6 +13,7 @@ sudo n 12.13.0
 
 ## Installing dependencies
 ```
+cd src
 npm i
 ```
 
